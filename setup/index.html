@@ -65,8 +65,8 @@ function doPost(e) {
 }
 
 function escapeHtml(s) {
-  return s.replace(/[&<>"']/g, function (c) {
-    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+  return s.replace(/[&amp;&lt;&gt;"']/g, function (c) {
+    return { "&amp;": "&amp;amp;", "&lt;": "&amp;lt;", "&gt;": "&amp;gt;", '"': "&amp;quot;", "'": "&amp;#39;" }[c];
   });
 }
 
