@@ -1,0 +1,445 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>תנאי הזמנת שיעורי סקי בגודאורי</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #13294b;
+    --ink-soft: #4a5d7a;
+    --ice: #eaf3fb;
+    --ice-2: #d6e7f5;
+    --accent: #2f6fb0;
+    --accent-dark: #1f5590;
+    --line: #c9dbec;
+    --error: #c0392b;
+    --card: #ffffff;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: "Assistant", "Arial Hebrew", Arial, sans-serif;
+    color: var(--ink);
+    background: linear-gradient(180deg, var(--ice) 0%, #f7fbff 40%, #ffffff 100%);
+    min-height: 100vh;
+    line-height: 1.65;
+    -webkit-text-size-adjust: 100%;
+  }
+  .wrap { max-width: 640px; margin: 0 auto; padding: 28px 16px 48px; }
+  header { text-align: center; margin-bottom: 20px; }
+  header .peaks { font-size: 40px; line-height: 1; }
+  h1 { font-size: 26px; font-weight: 800; margin: 8px 0 6px; line-height: 1.3; }
+  header p { margin: 0; color: var(--ink-soft); font-size: 16px; }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 22px 20px;
+    box-shadow: 0 6px 24px rgba(19, 41, 75, 0.06);
+    margin-bottom: 18px;
+  }
+  .terms h2 { font-size: 18px; font-weight: 700; margin: 20px 0 6px; color: var(--accent-dark); }
+  .terms h2:first-child { margin-top: 0; }
+  .terms p { margin: 0 0 8px; font-size: 16px; }
+  .terms ul { margin: 0 0 8px; padding: 0 20px 0 0; }
+  .terms li { margin-bottom: 6px; font-size: 16px; }
+  .terms .closing { margin-top: 18px; font-weight: 700; text-align: center; font-size: 17px; }
+
+  .form h2 { font-size: 20px; margin: 0 0 14px; }
+  label.field { display: block; font-weight: 600; margin-bottom: 6px; font-size: 16px; }
+  input[type=text] {
+    width: 100%; font: inherit; font-size: 17px; color: var(--ink);
+    padding: 12px 14px; border: 1.5px solid var(--line); border-radius: 12px; background: #fbfdff;
+  }
+  input[type=text]:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(47,111,176,.15); }
+  .group { margin-bottom: 20px; }
+  .check {
+    display: flex; gap: 12px; align-items: flex-start; cursor: pointer;
+    background: var(--ice); border-radius: 12px; padding: 14px; font-size: 16px;
+  }
+  .check input { width: 22px; height: 22px; margin: 2px 0 0; flex-shrink: 0; accent-color: var(--accent); }
+  .sig-box {
+    position: relative; border: 1.5px dashed var(--accent); border-radius: 12px; background: #fbfdff;
+    height: 190px; touch-action: none; overflow: hidden;
+  }
+  .sig-box canvas { width: 100%; height: 100%; display: block; touch-action: none; }
+  .sig-hint {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    color: #9fb3c8; font-size: 17px; pointer-events: none;
+  }
+  .sig-line { position: absolute; left: 24px; right: 24px; bottom: 40px; border-bottom: 1px solid var(--line); pointer-events: none; }
+  .sig-actions { display: flex; justify-content: flex-start; margin-top: 6px; }
+  .link-btn { background: none; border: none; color: var(--accent); font: inherit; font-size: 15px; padding: 4px 0; cursor: pointer; text-decoration: underline; }
+  .err { color: var(--error); font-size: 14px; margin-top: 6px; display: none; }
+  .err.show { display: block; }
+
+  .btn {
+    display: block; width: 100%; font: inherit; font-size: 19px; font-weight: 700;
+    color: #fff; background: var(--accent); border: none; border-radius: 14px; padding: 15px 18px; cursor: pointer;
+    transition: background .15s;
+  }
+  .btn:hover { background: var(--accent-dark); }
+  .btn:disabled { opacity: .6; cursor: wait; }
+  .btn.secondary { background: #fff; color: var(--accent); border: 1.5px solid var(--accent); margin-top: 10px; }
+  .status { text-align: center; margin-top: 12px; font-size: 15px; color: var(--ink-soft); min-height: 1em; }
+  .status.error { color: var(--error); }
+
+  #thanks { display: none; text-align: center; }
+  #thanks .big { font-size: 46px; line-height: 1; }
+  #thanks h2 { font-size: 26px; margin: 10px 0 6px; }
+  #thanks p { margin: 0 0 14px; font-size: 17px; }
+  .tip {
+    background: #fff8e6; border: 1px solid #f3d98b; border-radius: 12px; padding: 12px 14px;
+    font-size: 16px; margin: 16px 0; text-align: right;
+  }
+
+  /* PDF rendering area (off-screen) */
+  #pdf-stage { position: fixed; top: 0; left: -10000px; }
+  .pdf-page {
+    width: 794px; height: 1123px; padding: 60px 64px; background: #fff; color: #13294b;
+    font-family: "Assistant", Arial, sans-serif; direction: rtl; overflow: hidden; position: relative;
+  }
+  .pdf-page h1 { font-size: 24px; margin: 0 0 2px; text-align: center; }
+  .pdf-page .sub { text-align: center; color: #4a5d7a; font-size: 13px; margin-bottom: 10px; }
+  .pdf-page h2 { font-size: 15.5px; margin: 9px 0 2px; color: #1f5590; }
+  .pdf-page p, .pdf-page li { font-size: 13.5px; line-height: 1.5; margin: 0 0 3px; }
+  .pdf-page ul { margin: 0 0 3px; padding: 0; list-style: none; }
+  .pdf-page li { padding-right: 14px; position: relative; }
+  .pdf-page li .dot { position: absolute; right: 0; top: 0; }
+  .pdf-page .closing { text-align: center; font-weight: 700; margin-top: 8px; }
+  .pdf-sign {
+    margin-top: 14px; border: 1.5px solid #c9dbec; border-radius: 12px; padding: 12px 20px; background: #f6faff;
+  }
+  .pdf-sign h2 { margin-top: 0; }
+  .pdf-sign .row { font-size: 14px; margin-bottom: 3px; }
+  .pdf-sign .row b { display: inline-block; min-width: 88px; }
+  .pdf-sign img { display: block; max-width: 260px; max-height: 90px; width: auto; height: auto; border-bottom: 1px solid #13294b; margin-top: 2px; background: #fff; }
+  .pdf-foot { position: absolute; bottom: 20px; left: 64px; right: 64px; font-size: 11px; color: #8a9bb3; text-align: center; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div id="main">
+    <header>
+      <div class="peaks">🏔️</div>
+      <h1>תנאי הזמנת שיעורי סקי בגודאורי ⛷️</h1>
+      <p>יש לקרוא את התנאים, למלא שם, לאשר ולחתום בתחתית העמוד</p>
+    </header>
+
+    <section class="card terms" id="terms">
+      <h2>1. הזמנת שיעור ותשלום מקדמה</h2>
+      <p>לצורך הבטחת ההזמנה ושמירת מועד השיעור, יש לשלם מקדמה בסך 10% מעלות ההזמנה בעת ביצוע ההזמנה.</p>
+      <p>המקדמה תשולם בשקלים באמצעות ביט או PayBox, לפי שער ההמרה ביום התשלום.</p>
+
+      <h2>2. יתרת התשלום</h2>
+      <p>יתרת התשלום תשולם לפני תחילת השיעור. ניתן לשלם בלארי גאורגי (GEL), בדולר אמריקאי (USD) או ביורו (EUR), לפי שער ההמרה ביום התשלום.</p>
+
+      <h2>3. מדיניות ביטולים</h2>
+      <ul>
+        <li>ביטול עד 14 יום לפני מועד השיעור: ניתן לבטל את ההזמנה ללא דמי ביטול ולקבל החזר מלא של המקדמה.</li>
+        <li>ביטול פחות מ-14 יום לפני מועד השיעור: המקדמה לא תוחזר.</li>
+      </ul>
+
+      <h2>4. תנאי מזג אוויר, שינויים ועיכובים</h2>
+      <ul>
+        <li><b>תנאי מזג אוויר:</b> במקרה של תנאי מזג אוויר קיצוניים או סגירת אתר הסקי שאינם מאפשרים לקיים את השיעור בבטחה, ייעשה ניסיון לתאם מועד חלופי. אם לא ניתן לקבוע מועד חלופי, יינתן החזר כספי מלא כולל המקדמה על השיעורים שבוטלו.</li>
+        <li><b>איחור מצד הלקוח:</b> זמן האיחור יקוזז מזמן השיעור, והשיעור יסתיים במועד שנקבע מראש, ללא הארכה או החזר כספי.</li>
+        <li><b>איחור מצד המדריך:</b> במקרה של איחור מצד המדריך, תינתן השלמת זמן בהתאם למשך האיחור.</li>
+      </ul>
+
+      <h2>5. כוח עליון ומצב מלחמה</h2>
+      <p>במקרה של מלחמה, מצב חירום, סגירת מרחב אווירי או אירוע כוח עליון שאינו בשליטת הצדדים ומונע את קיום השיעור, ייעשה ניסיון לתאם מועד חלופי. אם לא ניתן לקבוע מועד חלופי, תבוטל ההזמנה והמקדמה תוחזר במלואה.</p>
+
+      <h2>6. אישור ההזמנה</h2>
+      <p>לאחר קבלת המקדמה, תישלח ללקוח הודעת אישור הכוללת את פרטי ההזמנה: תאריכים, שעות השיעור והסכום שנותר לתשלום.</p>
+      <p>ההזמנה תאושר ותשוריין באופן סופי עם קבלת המקדמה בפועל.</p>
+
+      <h2>7. ביטוח ובטיחות</h2>
+      <p>באחריות כל משתתף לרכוש ביטוח נסיעות הכולל כיסוי מתאים לספורט חורף ולגלישת סקי. יש צורך לוודא שהפוליסה מכסה את אופי הפעילות המתוכננת.</p>
+      <p>המשתתפים נדרשים להגיע עם ציוד סקי מתאים ולפעול בהתאם להנחיות הבטיחות של המדריך ושל אתר הסקי.</p>
+
+      <h2>8. אישור התנאים</h2>
+      <p>חתימת הלקוח על מסמך זה מהווה אישור לכך שקרא את תנאי ההזמנה והסכים לכל התנאים המפורטים לעיל.</p>
+
+      <p class="closing">תודה שבחרתם בי! נתראה על השלג 🤍⛷️</p>
+    </section>
+
+    <section class="card form">
+      <h2>אישור וחתימה</h2>
+
+      <div class="group">
+        <label class="field" for="fullname">שם מלא</label>
+        <input type="text" id="fullname" autocomplete="name" placeholder="שם פרטי ושם משפחה">
+        <div class="err" id="err-name">יש למלא שם מלא</div>
+      </div>
+
+      <div class="group">
+        <label class="check">
+          <input type="checkbox" id="agree">
+          <span>קראתי את תנאי ההזמנה ואני מאשר/ת אותם</span>
+        </label>
+        <div class="err" id="err-agree">יש לסמן שקראת ואישרת את התנאים</div>
+      </div>
+
+      <div class="group">
+        <label class="field">חתימה</label>
+        <div class="sig-box" id="sig-box">
+          <div class="sig-line"></div>
+          <div class="sig-hint" id="sig-hint">חתמו כאן עם האצבע ✍️</div>
+          <canvas id="sig"></canvas>
+        </div>
+        <div class="sig-actions"><button type="button" class="link-btn" id="sig-clear">ניקוי חתימה</button></div>
+        <div class="err" id="err-sig">יש לחתום בתיבה</div>
+      </div>
+
+      <button class="btn" id="submit" type="button">אישור ושליחה</button>
+      <div class="status" id="status"></div>
+    </section>
+  </div>
+
+  <section class="card" id="thanks">
+    <div class="big">🤍⛷️</div>
+    <h2>תודה רבה!</h2>
+    <p>הטופס החתום התקבל בהצלחה.</p>
+    <div class="tip">💡 <b>מומלץ לשמור עותק של הקובץ בטלפון</b>, כדי שיהיו לכם התנאים שאישרתם בכל רגע.</div>
+    <button class="btn" id="save" type="button">שמירת הקובץ בטלפון</button>
+    <button class="btn secondary" id="share" type="button" style="display:none">שיתוף / שמירה בקבצים</button>
+    <p style="margin-top:18px">נתראה על השלג! 🏔️</p>
+  </section>
+
+</div>
+
+<div id="pdf-stage" aria-hidden="true"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+// ===== Settings =====
+// Google Apps Script web app URL that emails the PDF to Shira.
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwqDPhwQdrP5dhd8T2uQLj0N9kUfFv3ftYMjj5NYkkWx1xr1eC4qs6ixjZV9CO0iph89A/exec";
+
+// ===== Signature pad =====
+const canvas = document.getElementById("sig");
+const ctx = canvas.getContext("2d");
+const hint = document.getElementById("sig-hint");
+let drawing = false, hasInk = false, last = null;
+
+function sizeCanvas() {
+  const rect = canvas.getBoundingClientRect();
+  const ratio = Math.max(window.devicePixelRatio || 1, 1);
+  const prev = hasInk ? canvas.toDataURL() : null;
+  canvas.width = Math.round(rect.width * ratio);
+  canvas.height = Math.round(rect.height * ratio);
+  ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+  ctx.lineWidth = 2.6; ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.strokeStyle = "#13294b";
+  if (prev) { const img = new Image(); img.onload = () => ctx.drawImage(img, 0, 0, rect.width, rect.height); img.src = prev; }
+}
+let lastWidth = 0;
+window.addEventListener("resize", () => {
+  const w = canvas.getBoundingClientRect().width;
+  if (Math.abs(w - lastWidth) > 1) { lastWidth = w; sizeCanvas(); }
+});
+
+function pos(e) { const r = canvas.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; }
+canvas.addEventListener("pointerdown", e => {
+  e.preventDefault(); canvas.setPointerCapture(e.pointerId);
+  drawing = true; last = pos(e);
+  ctx.beginPath(); ctx.arc(last.x, last.y, 1.2, 0, Math.PI * 2); ctx.fillStyle = "#13294b"; ctx.fill();
+  markInk();
+});
+canvas.addEventListener("pointermove", e => {
+  if (!drawing) return; e.preventDefault();
+  const p = pos(e);
+  ctx.beginPath(); ctx.moveTo(last.x, last.y); ctx.lineTo(p.x, p.y); ctx.stroke();
+  last = p;
+});
+["pointerup", "pointercancel", "pointerleave"].forEach(t => canvas.addEventListener(t, () => { drawing = false; }));
+function markInk() { if (!hasInk) { hasInk = true; hint.style.display = "none"; document.getElementById("err-sig").classList.remove("show"); } }
+document.getElementById("sig-clear").addEventListener("click", () => {
+  const r = canvas.getBoundingClientRect(); ctx.clearRect(0, 0, r.width, r.height);
+  hasInk = false; hint.style.display = "flex";
+});
+
+// ===== Helpers =====
+const $ = id => document.getElementById(id);
+function pad(n) { return String(n).padStart(2, "0"); }
+function nowStr(d) { return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`; }
+function esc(s) { return s.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
+
+function signatureImage() {
+  // Crop the signature to its drawn area, on white background
+  const w = canvas.width, h = canvas.height;
+  const data = canvas.getContext("2d").getImageData(0, 0, w, h).data;
+  let minX = w, minY = h, maxX = 0, maxY = 0;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    if (data[(y * w + x) * 4 + 3] > 10) { if (x < minX) minX = x; if (x > maxX) maxX = x; if (y < minY) minY = y; if (y > maxY) maxY = y; }
+  }
+  const m = 12; minX = Math.max(0, minX - m); minY = Math.max(0, minY - m); maxX = Math.min(w, maxX + m); maxY = Math.min(h, maxY + m);
+  const cw = maxX - minX, ch = maxY - minY;
+  const out = document.createElement("canvas"); out.width = cw; out.height = ch;
+  const o = out.getContext("2d"); o.fillStyle = "#fff"; o.fillRect(0, 0, cw, ch);
+  o.drawImage(canvas, minX, minY, cw, ch, 0, 0, cw, ch);
+  return out.toDataURL("image/png");
+}
+
+// html2canvas draws text word-by-word; force RTL so Hebrew punctuation lands on the correct side.
+function withRtlText(fn) {
+  const proto = CanvasRenderingContext2D.prototype;
+  const orig = proto.fillText;
+  proto.fillText = function (text, x, y, maxW) {
+    const d = this.direction, a = this.textAlign;
+    this.direction = "rtl"; this.textAlign = "left";
+    const r = maxW === undefined ? orig.call(this, text, x, y) : orig.call(this, text, x, y, maxW);
+    this.direction = d; this.textAlign = a;
+    return r;
+  };
+  return Promise.resolve().then(fn).finally(() => { proto.fillText = orig; });
+}
+
+async function buildPdf(name, dateStr, sigUrl) {
+  const stage = $("pdf-stage"); stage.innerHTML = "";
+  const blocks = [];
+  const head = document.createElement("div");
+  head.innerHTML = `<h1>תנאי הזמנת שיעורי סקי בגודאורי</h1><div class="sub">טופס אישור תנאים חתום · ${esc(dateStr)}</div>`;
+  blocks.push(head);
+  // Copy terms content as separate blocks so pages break between sections
+  const termsEls = Array.from($("terms").children);
+  let cur = null;
+  termsEls.forEach(el => {
+    if (el.tagName === "H2" || !cur) { cur = document.createElement("div"); blocks.push(cur); }
+    const c = el.cloneNode(true);
+    c.querySelectorAll("li").forEach(li => { const s = document.createElement("span"); s.className = "dot"; s.textContent = "•"; li.prepend(s); });
+    cur.appendChild(c);
+  });
+  const sign = document.createElement("div");
+  sign.className = "pdf-sign";
+  sign.innerHTML = `
+    <h2>אישור וחתימת הלקוח/ה</h2>
+    <div style="display:flex;gap:24px;align-items:flex-end;justify-content:space-between">
+      <div>
+        <div class="row"><b>שם מלא:</b> ${esc(name)}</div>
+        <div class="row"><b>אישור:</b> ☑ קראתי את תנאי ההזמנה ואני מאשר/ת אותם</div>
+        <div class="row"><b>תאריך ושעה:</b> ${esc(dateStr)}</div>
+      </div>
+      <div style="text-align:center">
+        <img src="${sigUrl}" alt="">
+        <div class="row" style="margin-top:2px"><b style="min-width:0">חתימה</b></div>
+      </div>
+    </div>`;
+  blocks.push(sign);
+
+  // Lay blocks into A4 pages
+  const pages = [];
+  function newPage() {
+    const p = document.createElement("div"); p.className = "pdf-page"; stage.appendChild(p); pages.push(p); return p;
+  }
+  let page = newPage();
+  const maxH = 1123 - 60 - 50; // usable height (top padding, bottom room for footer)
+  for (const b of blocks) {
+    page.appendChild(b);
+    await new Promise(r => requestAnimationFrame(r));
+    const used = b.offsetTop + b.offsetHeight - 60;
+    if (used > maxH && page.children.length > 1) { page = newPage(); page.appendChild(b); }
+  }
+  pages.forEach((p, i) => {
+    const f = document.createElement("div"); f.className = "pdf-foot";
+    f.textContent = `עמוד ${i + 1} מתוך ${pages.length}`;
+    p.appendChild(f);
+  });
+
+  // Wait for signature image + fonts
+  await Promise.all(Array.from(stage.querySelectorAll("img")).map(img => img.complete ? 0 : new Promise(r => { img.onload = img.onerror = r; })));
+  if (document.fonts && document.fonts.ready) await document.fonts.ready;
+
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF({ unit: "pt", format: "a4", compress: true });
+  const pw = pdf.internal.pageSize.getWidth(), ph = pdf.internal.pageSize.getHeight();
+  await withRtlText(async () => {
+    for (let i = 0; i < pages.length; i++) {
+      const c = await html2canvas(pages[i], { scale: 2, backgroundColor: "#ffffff", useCORS: true, logging: false });
+      if (i > 0) pdf.addPage();
+      pdf.addImage(c.toDataURL("image/jpeg", 0.9), "JPEG", 0, 0, pw, ph);
+    }
+  });
+  stage.innerHTML = "";
+  return pdf.output("blob");
+}
+
+function blobToBase64(blob) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(String(r.result).split(",")[1]);
+    r.onerror = rej; r.readAsDataURL(blob);
+  });
+}
+
+// ===== Submit =====
+let pdfBlob = null, pdfName = "";
+$("fullname").addEventListener("input", () => $("err-name").classList.remove("show"));
+$("agree").addEventListener("change", () => $("err-agree").classList.remove("show"));
+
+$("submit").addEventListener("click", async () => {
+  const name = $("fullname").value.trim().replace(/\s+/g, " ");
+  const agree = $("agree").checked;
+  let ok = true;
+  if (name.length < 2) { $("err-name").classList.add("show"); ok = false; }
+  if (!agree) { $("err-agree").classList.add("show"); ok = false; }
+  if (!hasInk) { $("err-sig").classList.add("show"); ok = false; }
+  if (!ok) { $("status").textContent = ""; return; }
+
+  const btn = $("submit"), status = $("status");
+  btn.disabled = true; status.className = "status"; status.textContent = "מכינים את הקובץ ושולחים…";
+  try {
+    const now = new Date();
+    const dateStr = nowStr(now);
+    if (!pdfBlob) {
+      pdfBlob = await buildPdf(name, dateStr, signatureImage());
+      pdfName = `אישור תנאים - ${name} - ${pad(now.getDate())}.${pad(now.getMonth() + 1)}.${now.getFullYear()}.pdf`;
+    }
+    if (!SCRIPT_URL) throw new Error("form not connected yet");
+    {
+      const body = JSON.stringify({ name, date: dateStr, filename: pdfName, pdf: await blobToBase64(pdfBlob) });
+      const res = await fetch(SCRIPT_URL, { method: "POST", body });
+      const out = await res.json();
+      if (!out.ok) throw new Error(out.error || "send failed");
+    }
+    showThanks();
+  } catch (err) {
+    console.error(err);
+    status.className = "status error";
+    status.textContent = "השליחה לא הצליחה. כדאי לבדוק את החיבור לאינטרנט ולנסות שוב.";
+    btn.disabled = false;
+  }
+});
+
+function showThanks() {
+  $("main").style.display = "none";
+  $("thanks").style.display = "block";
+  window.scrollTo(0, 0);
+  try {
+    const f = new File([pdfBlob], pdfName, { type: "application/pdf" });
+    if (navigator.canShare && navigator.canShare({ files: [f] })) $("share").style.display = "block";
+  } catch (e) {}
+}
+
+$("save").addEventListener("click", () => {
+  const url = URL.createObjectURL(pdfBlob);
+  const a = document.createElement("a");
+  a.href = url; a.download = pdfName; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+});
+$("share").addEventListener("click", async () => {
+  try { await navigator.share({ files: [new File([pdfBlob], pdfName, { type: "application/pdf" })], title: pdfName }); } catch (e) {}
+});
+
+window.addEventListener("load", () => { lastWidth = canvas.getBoundingClientRect().width; sizeCanvas(); });
+</script>
+</body>
+</html>
