@@ -112,7 +112,7 @@ tbody tr:last-child td{border-bottom:0}
 .cmenu{flex-basis:100%;display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:8px;background:var(--bg);border:1px solid var(--line);border-radius:10px}
 #ask{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:20px;z-index:20}
 #ask[hidden]{display:none}
-.askbox{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;max-width:380px;width:100%}
+.askbox{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;max-width:380px;width:100%;max-height:85vh;overflow:auto}
 .ibtn .chk{display:inline-flex}.ibtn .chk svg{width:14px;height:14px}
 .autofill{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:10px}
 nav{position:fixed;inset:auto 0 0 0;background:var(--card);border-top:1px solid var(--line);display:flex;padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px));z-index:5}
@@ -137,7 +137,7 @@ body.noauth nav{display:none}
 </header>
 <main id="main"></main>
 <div id="toast" role="status"></div>
-<div id="ask" hidden><div class="askbox"><div id="askq"><p id="asktxt" class="nm"></p><p class="sub">כן: ימחק כאן, ואראה לך קישורים לימים של האירועים ב-Google Calendar כדי שתמחק אותם שם. לא: ימחק רק כאן.</p><div class="acts"><button class="btn" data-act="askYes">כן</button><button class="ghost" data-act="askNo">לא</button><button class="ghost" data-act="askCancel">ביטול</button></div></div><div id="askl" hidden><p class="nm">למחיקה ב-Google Calendar</p><p class="sub">לחץ על כל יום, מצא את האירוע של <span id="askname"></span> ומחק אותו.</p><div id="asklist"></div><div class="acts"><button class="ghost" data-act="askDone">סיימתי</button></div></div></div></div>
+<div id="ask" hidden><div class="askbox"><div id="askq"><p id="asktxt" class="nm"></p><p class="sub">כן: ימחק כאן, ואראה לך קישורים לימים של האירועים ב-Google Calendar כדי שתמחק אותם שם. לא: ימחק רק כאן.</p><div class="acts"><button class="btn" data-act="askYes">כן</button><button class="ghost" data-act="askNo">לא</button><button class="ghost" data-act="askCancel">ביטול</button></div></div><div id="askl" hidden><p class="nm">למחיקה ב-Google Calendar</p><p class="sub">לחץ על כל יום, מצא את האירוע של <span id="askname"></span> ומחק אותו.</p><div id="asklist"></div><div class="acts"><button class="ghost" data-act="askDone">סיימתי</button></div></div><div id="askc" hidden><p class="nm">לעדכן גם ב-Google Calendar</p><p class="sub">שיעור של <span id="askcname"></span> כבר היה ביומן, והמועד שלו השתנה. היומן לא מתעדכן לבד: מחק שם את האירוע הישן והוסף את החדש.</p><div id="askclist"></div><div class="acts"><button class="ghost" data-act="askDone">סיימתי</button></div></div></div></div>
 <div id="acctm" hidden><div class="askbox"><p class="nm" style="margin:0">החשבון שלי</p><p class="sub" id="acctmail" dir="ltr" style="text-align:start;margin:4px 0 0"></p><div class="stack"><button class="ghost" data-act="exp">שמירת גיבוי לקובץ</button><label class="ghost" style="color:var(--mute)">ייבוא נתונים מקובץ גיבוי<input type="file" id="impf" accept=".json,application/json" hidden></label><div id="impq"></div><button class="ghost danger" data-act="logout">יציאה מהחשבון</button><button class="btn" data-act="acctClose">סגירה</button></div></div></div>
 <nav>
 <button data-act="tab" data-id="lessons">שיעורים</button>
@@ -181,30 +181,61 @@ let user=null,authReady=!sb,authMode='in',authEmail='',authMsg='',recovery=false
 const LK=()=>'ski-diary-v2:'+(user?user.id:'local');
 const keepLocal=()=>{try{localStorage.setItem(LK(),JSON.stringify(S))}catch(e){}};
 
-let dirty=false,saving=false;
+// ---- Sync: merge item by item, so two devices never erase each other's changes.
+// Every booking/lesson carries u = when it last changed on any device; deletions are kept in S.del ("kind:id" -> time).
+// When two copies meet, each booking and lesson keeps its newest version; a deletion wins over older versions.
+let dirty=false,saving=false,prev={};
+const KINDS=['bookings','lessons'];
+const sig=x=>JSON.stringify(Object.assign({},x,{u:0}));
+const snap=s=>{const o={tpl:s.tpl||''};KINDS.forEach(k=>(s[k]||[]).forEach(x=>{o[k+':'+x.id]=sig(x)}));return o};
+function stamp(){
+ const now=Date.now(),seen={};S.del=S.del||{};
+ KINDS.forEach(k=>S[k].forEach(x=>{const key=k+':'+x.id;seen[key]=1;if(prev[key]!==sig(x))x.u=now}));
+ Object.keys(prev).forEach(key=>{if(key!=='tpl'&&!seen[key])S.del[key]=now});
+ if((S.tpl||'')!==prev.tpl)S.tplU=now;
+ const old=now-180*864e5;Object.keys(S.del).forEach(k=>{if(S.del[k]<old)delete S.del[k]});
+ prev=snap(S);
+}
+function merge(a,b){
+ const del=Object.assign({},b.del||{});Object.entries(a.del||{}).forEach(([k,t])=>{if(!(del[k]>=t))del[k]=t});
+ const m={del};
+ KINDS.forEach(k=>{const by={};(b[k]||[]).forEach(x=>{by[x.id]=x});(a[k]||[]).forEach(x=>{const y=by[x.id];if(!y||(x.u||0)>=(y.u||0))by[x.id]=x});
+  m[k]=Object.values(by).filter(x=>!(del[k+':'+x.id]>=(x.u||0)))});
+ const at=a.tplU||0,bt=b.tplU||0;m.tpl=at>=bt?(a.tpl||''):(b.tpl||'');m.tplU=Math.max(at,bt);
+ m.ts=Math.max(a.ts||0,b.ts||0);
+ return m;
+}
+const canon=s=>JSON.stringify([KINDS.map(k=>(s[k]||[]).slice().sort((x,y)=>x.id<y.id?-1:1)),Object.keys(s.del||{}).sort().map(k=>k+s.del[k]),s.tpl||'']);
+// Bring the cloud copy in. Returns true if anything on this device changed.
+function absorb(d){
+ if(!(d&&d.bookings))return false;
+ const M=merge(S,d),changed=canon(M)!==canon(S);
+ if(changed){S=M;mig();prev=snap(S);keepLocal()}
+ if(canon(M)!==canon(d))dirty=true;
+ return changed;
+}
+async function fetchCloud(){const{data,error}=await sb.from('diaries').select('data').eq('user_id',user.id).maybeSingle();if(error)throw error;return data&&data.data}
 function save(){
+ stamp();
  S.ts=Date.now();
  keepLocal();
  dirty=true;
  if(user)flush();else setStatus('נשמר במכשיר הזה בלבד');
 }
+// Read the cloud copy, merge, then write the merged copy back.
+async function push(){const d=await fetchCloud(),ch=absorb(d);S.ts=Date.now();keepLocal();const{error}=await sb.from('diaries').upsert({user_id:user.id,data:S,ts:S.ts});if(error)throw error;return ch}
 async function flush(){
  if(saving||!dirty||!user)return;
  saving=true;dirty=false;
- let ok=false;try{const{error}=await sb.from('diaries').upsert({user_id:user.id,data:S,ts:S.ts||0});ok=!error}catch(e){}
+ let ok=false,ch=false;try{ch=await push();ok=true}catch(e){}
  saving=false;
- if(ok){setStatus('✓ נשמר');if(dirty)flush()}
+ if(ok){setStatus('✓ נשמר');if(ch&&!adding&&!editId)render();if(dirty)flush()}
  else{dirty=true;setStatus('השמירה נכשלה, מנסה שוב…');setTimeout(flush,3000)}
 }
-// Merge by ts: the newer copy (this device or the cloud) wins. Returns true if S was replaced by the cloud copy.
 async function pull(){
- const{data,error}=await sb.from('diaries').select('data').eq('user_id',user.id).maybeSingle();
- if(error)throw error;
- const d=data&&data.data;
- if(d&&d.bookings){
-  if((d.ts||0)>(S.ts||0)){S=d;mig();keepLocal();return true}
-  if((S.ts||0)>(d.ts||0))dirty=true;
- }else if(S.lessons.length||S.bookings.length)dirty=true;
+ const d=await fetchCloud();
+ if(d&&d.bookings)return absorb(d);
+ if(S.lessons.length||S.bookings.length)dirty=true;
  return false;
 }
 // Daily backup copy in its own table, one per day, kept forever.
@@ -220,7 +251,7 @@ async function start(u){
  user=u;S={bookings:[],lessons:[]};dirty=false;
  try{const c=localStorage.getItem(LK());if(c)S=JSON.parse(c)}catch(e){}
  if(!S.bookings)S={bookings:[],lessons:[]};
- mig();tab='lessons';adding=false;editId=null;calD=null;calSel=null;confirmId=null;
+ mig();prev=snap(S);tab='lessons';adding=false;editId=null;calD=null;calSel=null;confirmId=null;
  render();
  try{await pull();setStatus('✓ נשמר');if(dirty)flush();backup()}catch(e){setStatus('אין חיבור, נשמר במכשיר הזה')}
  if(!adding&&!editId&&!recovery)render();
@@ -275,7 +306,7 @@ function readImp(f){
  r.readAsText(f);
 }
 async function logout(){
- if(dirty){try{await sb.from('diaries').upsert({user_id:user.id,data:S,ts:S.ts||0});dirty=false}catch(e){}}
+ if(dirty){try{await push();dirty=false}catch(e){}}
  await sb.auth.signOut().catch(()=>{});
  user=null;S={bookings:[],lessons:[]};$('#acctm').hidden=true;authMode='in';authMsg='';render();
 }
@@ -440,8 +471,13 @@ function saveBooking(){
  if(rows.some(r=>!r.date||!r.start||!r.end)){err('חסרים תאריך או שעות באחד השיעורים');return false}
  const b={id:uid(),name,phone:$('#f-phone').value.trim(),n:+$('#f-n').value,ages:$$('.f-age').map(i=>+i.value||0),expT:$('#f-expt').value,expD:$('#f-expt').value===EXP2?$('#f-expd').value.trim():'',exp:expJoin($('#f-expt').value,$('#f-expd').value.trim()),note:$('#f-note').value.trim(),cur:$('#f-cur').value,total:+$('#f-total').value||0,dep:+$('#f-dep').value||0,depSt:$('#f-depst').value,paid:0};
  const oc={};S.lessons.forEach(l=>{if(l.cal)oc[l.id]=l.date+l.start+l.end});
+ // Lessons of this booking that were already in Google Calendar, to spot the ones that moved or were removed.
+ const was=editId?S.lessons.filter(l=>l.bid===editId&&l.cal).map(l=>({...l})):[];
  if(editId){const o=S.bookings.find(x=>x.id===editId);Object.assign(o,{...b,id:o.id,paid:o.paid,rem:o.rem});b.id=o.id;S.lessons=S.lessons.filter(l=>l.bid!==editId)}else S.bookings.push(b);
- rows.forEach(r=>S.lessons.push({...r,id:r.id||uid(),bid:b.id,cal:oc[r.id]===r.date+r.start+r.end}));adding=false;editId=null;save();return true;
+ rows.forEach(r=>S.lessons.push({...r,id:r.id||uid(),bid:b.id,cal:oc[r.id]===r.date+r.start+r.end}));adding=false;editId=null;save();
+ const upd=was.map(o=>({o,n:S.lessons.find(l=>l.id===o.id)||null})).filter(x=>!x.n||!x.n.cal);
+ if(upd.length)setTimeout(()=>showCalUpd(b.name,upd),0);
+ return true;
 }
 
 const tm=t=>{const m=String(t||'').match(/(\d{1,2})(?::?(\d{2}))?/);return m?String(m[1]).padStart(2,'0')+':'+(m[2]||'00'):''};
@@ -470,8 +506,14 @@ function fillFrom(d){
 }
 let delAsk=null;
 function doDel(a,id){if(a==='del')S.lessons=S.lessons.filter(x=>x.id!==id);else{S.bookings=S.bookings.filter(x=>x.id!==id);S.lessons=S.lessons.filter(x=>x.bid!==id)}S.bookings=S.bookings.filter(b=>S.lessons.some(l=>l.bid===b.id));save()}
-function askUi(on,name){const o=$('#ask');o.hidden=!on;$('#askq').hidden=false;$('#askl').hidden=true;if(on)$('#asktxt').textContent='למחוק גם מהיומן שלך ב-Google Calendar'+(name?' (של '+name+')':'')+'?'}
-function showLinks(d){$('#askq').hidden=true;$('#askl').hidden=false;$('#ask').hidden=false;$('#askname').textContent=d.name;$('#asklist').innerHTML=d.ls.map(l=>{const[y,m,dd]=l.date.split('-').map(Number);return `<a class="btn full" style="margin-bottom:8px;text-align:center" href="https://calendar.google.com/calendar/r/day/${y}/${m}/${dd}" target="_blank" rel="noopener">${fmtD(l.date)}, ${l.start}–${l.end}</a>`}).join('')}
+// After editing a booking: lessons already in Google Calendar that moved or were removed need updating there too.
+function showCalUpd(name,upd){
+ const w=x=>fmtD(x.date)+', '+x.start+'–'+x.end;
+ $('#askq').hidden=true;$('#askl').hidden=true;$('#askc').hidden=false;$('#ask').hidden=false;$('#askcname').textContent=name;
+ $('#askclist').innerHTML=upd.map(({o,n})=>`<div class="card sess"><div class="nm">${n?'השיעור זז':'השיעור הוסר'}</div><div class="sub">היה: ${w(o)}${n?'<br>עכשיו: '+w(n):''}</div><div class="acts"><a class="ibtn" href="${dayUrl(o)}" target="_blank" rel="noopener">${icoCal} מחיקת הישן ביומן</a>${n?`<a class="ibtn" data-act="cal" data-id="${n.id}" href="${calUrl(n)}" target="_blank" rel="noopener">${icoCal} הוספת המועד החדש</a>`:''}</div></div>`).join('');
+}
+function askUi(on,name){const o=$('#ask');o.hidden=!on;$('#askq').hidden=false;$('#askl').hidden=true;$('#askc').hidden=true;if(on)$('#asktxt').textContent='למחוק גם מהיומן שלך ב-Google Calendar'+(name?' (של '+name+')':'')+'?'}
+function showLinks(d){$('#askq').hidden=true;$('#askc').hidden=true;$('#askl').hidden=false;$('#ask').hidden=false;$('#askname').textContent=d.name;$('#asklist').innerHTML=d.ls.map(l=>{const[y,m,dd]=l.date.split('-').map(Number);return `<a class="btn full" style="margin-bottom:8px;text-align:center" href="https://calendar.google.com/calendar/r/day/${y}/${m}/${dd}" target="_blank" rel="noopener">${fmtD(l.date)}, ${l.start}–${l.end}</a>`}).join('')}
 document.addEventListener('click',e=>{
  const b=e.target.closest('[data-act]');if(!b)return;
  const a=b.dataset.act,id=b.dataset.id;
@@ -484,7 +526,7 @@ document.addEventListener('click',e=>{
  if(a==='tplIns'){const t=$('#tpl');if(t){const s=t.selectionStart??t.value.length,e2=t.selectionEnd??s;t.value=t.value.slice(0,s)+id+t.value.slice(e2);t.focus();t.selectionStart=t.selectionEnd=s+id.length;tplLive();save()}return}
  if(a==='tplReset'){S.tpl='';save();render();return}
  if(a==='unrem'){const x=S.bookings.find(y=>y.id===id);if(x){x.rem=false;save()}render();return}
- if(a==='impYes'){if(impData){S={bookings:impData.bookings,lessons:impData.lessons,tpl:impData.tpl||S.tpl||''};mig();tab='lessons';adding=false;editId=null;calD=null;save();impData=null;$('#impq').innerHTML='<div class="okmsg">✓ הנתונים יובאו</div>';render()}return}
+ if(a==='impYes'){if(impData){S={bookings:impData.bookings,lessons:impData.lessons,tpl:impData.tpl||S.tpl||'',tplU:S.tplU,del:S.del||{}};mig();tab='lessons';adding=false;editId=null;calD=null;save();impData=null;$('#impq').innerHTML='<div class="okmsg">✓ הנתונים יובאו</div>';render()}return}
  if(a==='tab'){tab=id;adding=false;editId=null;confirmId=null;calMenu=null}
  else if(a==='edit'){editId=id;tab='lessons';adding=false;confirmId=null;window.scrollTo(0,0)}
  else if(a==='addB'){adding=true;editId=null}
@@ -496,7 +538,7 @@ document.addEventListener('click',e=>{
  else if(a==='calNav'){calSel=null;const[y,m]=calD.split('-').map(Number);if(calV==='month'){const x=new Date(y,m-1+(+id),1),k=x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0'),fl=S.lessons.filter(l=>l.date.startsWith(k)).sort(cmp)[0];calD=fl?fl.date:k+'-01'}else calD=addD(calD,(+id)*(calV==='week'?7:1))}
  else if(a==='calToday'){calD=today();calSel=null}
  else if(a==='view'){view=id;try{localStorage.setItem('ski-view',id)}catch(e){}}
- else if(a==='cal'){const x=S.lessons.find(y=>y.id===id);if(x&&!x.cal){x.cal=true;save()}calMenu=null;setTimeout(render,400);return}
+ else if(a==='cal'){const x=S.lessons.find(y=>y.id===id);if(x&&!x.cal){x.cal=true;save()}if(b.closest('#askc')){b.classList.add('done');b.removeAttribute('data-act')}calMenu=null;setTimeout(render,400);return}
  else if(a==='remind'){const x=S.bookings.find(y=>y.id===id);if(x){x.rem=true;save()}setTimeout(render,400);return}
  else if(a==='autoFill'){autoFill();return}
  else if(a==='addSess'){addSess();return}
