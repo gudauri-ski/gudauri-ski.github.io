@@ -282,9 +282,11 @@ const calDesc=b=>{const a=(b.ages||[]).filter(Boolean),n=b.n||a.length||1;return
 const calUrl=l=>{const b=bOf(l),z=(d,t)=>{const[y,mo,da]=d.split('-').map(Number),[h,mi]=t.split(':').map(Number);return new Date(Date.UTC(y,mo-1,da,h-4,mi)).toISOString().replace(/[-:]|\.\d{3}/g,'')};return 'https://calendar.google.com/calendar/render?action=TEMPLATE&text='+encodeURIComponent(b.name)+'&dates='+z(l.date,l.start)+'/'+z(l.date,l.end)+'&location='+encodeURIComponent('Gudauri, Georgia')+'&details='+encodeURIComponent(calDesc(b))};
 const waNum=b=>{let p=(b.phone||'').replace(/\D/g,'').replace(/^00/,'');if(p.startsWith('0'))p='972'+p.slice(1);return p};
 // Reminder message: each user writes their own (saved as S.tpl, synced). Placeholders are filled per lesson.
-const DEF_TPL='היי {שם}, תזכורת לשיעור סקי ב{תאריך} בשעה {שעה}. נתראה!';
-const TPL_KEYS=[['{שם}','שם פרטי'],['{תאריך}','תאריך'],['{שעה}','שעת התחלה'],['{סיום}','שעת סיום']];
-const remMsg=l=>{const b=bOf(l);return (S.tpl||DEF_TPL).split('{שם}').join(first(b.name)).split('{תאריך}').join(fmtD(l.date)).split('{שעה}').join(l.start).split('{סיום}').join(l.end)};
+// {תאריכים ושעות} expands to every upcoming lesson of the booking, one per line (the reminder is sent once, before the first lesson).
+const DEF_TPL='היי {שם}! ⛷️\nתזכורת לגבי הסקי בגודאורי:\n{תאריכים ושעות}\n\nנתראה על השלג! אם משהו משתנה, אפשר לכתוב לי כאן.';
+const TPL_KEYS=[['{שם}','שם המזמין'],['{תאריכים ושעות}','תאריכים ושעות']];
+const lessonsTxt=l=>{const L=S.lessons.filter(x=>x.bid===l.bid&&x.date>=today()).sort(cmp),A=L.length?L:[l],ln=x=>fmtD(x.date)+', '+x.start+'–'+x.end;return A.length===1?ln(A[0]):A.map(x=>'• '+ln(x)).join('\n')};
+const remMsg=l=>{const b=bOf(l);return (S.tpl||DEF_TPL).split('{שם}').join(first(b.name)).split('{תאריכים ושעות}').join(lessonsTxt(l)).split('{תאריך}').join(fmtD(l.date)).split('{שעה}').join(l.start).split('{סיום}').join(l.end)};
 const waUrl=l=>waLink(waNum(bOf(l)),remMsg(l));
 const icoOk='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
 const waLink=(p,m)=>'https://wa.me/'+p+(m?'?text='+encodeURIComponent(m):'');
@@ -367,10 +369,10 @@ function vRemind(){
  h+=due.length?due.map(({b,l})=>remCard(b,l,true)).join(''):'<div class="nolsn">אין תזכורות לשלוח כרגע.</div>';
  const ex=all.find(l=>waNum(bOf(l)))||all[0];
  h+=`<details class="ent" id="tpld" style="margin-top:14px"${tplOpen?' open':''}><summary><b>נוסח הודעת התזכורת</b><span>עריכה</span></summary><div class="det">
-<textarea id="tpl" rows="4" dir="rtl">${esc(S.tpl||DEF_TPL)}</textarea>
+<textarea id="tpl" rows="7" dir="rtl">${esc(S.tpl||DEF_TPL)}</textarea>
 <div class="sub" style="margin-top:6px">לחץ כדי להוסיף להודעה פרט שמתמלא לבד:</div>
 <div class="acts">${TPL_KEYS.map(([k,t])=>`<button class="ghost" data-act="tplIns" data-id="${k}">${t}</button>`).join('')}</div>
-${ex?`<div class="sub" style="margin-top:10px">דוגמה: <span id="tplex">${esc(remMsg(ex))}</span></div>`:''}
+${ex?`<div class="sub" style="margin-top:10px">כך ההודעה תיראה ל${esc(bOf(ex).name)}:</div><div class="card sess" id="tplex" style="white-space:pre-line;font-size:.92rem">${esc(remMsg(ex))}</div>`:''}
 <div class="acts"><button class="ghost" data-act="tplReset">חזרה לנוסח המקורי</button></div></div></details>`;
  h+='<h2>כל השיעורים</h2>';
  h+=all.length?all.map(l=>remCard(bOf(l),l,false)).join(''):'<div class="empty">אין שיעורים קרובים.</div>';
