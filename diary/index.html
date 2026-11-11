@@ -568,10 +568,21 @@ function parseMsg(txt,todayStr){
  else if(/ני?סיון|גלש(?:ו|ה)? (?:כבר|בעבר|פעם)|יודע(?:ים|ת)? לגלוש|מתקדמ/.test(T))out.exp=EXP2;
  // amounts: 400 יורו / 400€ / €400 / 1500 ש"ח; near "מקדמה" = deposit
  const am=[],rAm=/(?:(\d{2,5})\s*(€|יורו|אירו|₪|שקל(?:ים)?|ש"ח|ש״ח|שח))|(?:(€|₪)\s*(\d{2,5}))/g;
- while((x=rAm.exec(T))){const v=+(x[1]||x[4]),c=/€|יורו|אירו/.test(x[2]||x[3])?'€':'₪',before=T.slice(Math.max(0,x.index-25),x.index);am.push({v,c,dep:/מקדמה/.test(before),tot:/סה"?כ|סה״כ|סך הכל|מחיר|עלות|ביחד|יחד/.test(before)})}
- const dep=am.find(a=>a.dep),tot=am.find(a=>!a.dep&&a.tot)||am.filter(a=>!a.dep).sort((a,b)=>b.v-a.v)[0];
- if(tot){out.total=tot.v;out.cur=tot.c}else if(dep)out.cur=dep.c;
- if(dep){out.dep=dep.v;if(/מקדמה[^.\n]{0,25}(?:שולמה|שולם|התקבלה|הועברה|קיבלתי)|(?:שילמ|העביר|העבירו)[^.\n]{0,25}מקדמה/.test(T))out.depSt='שולם'}
+ while((x=rAm.exec(T))){const v=+(x[1]||x[4]),c=/€|יורו|אירו/.test(x[2]||x[3])?'€':'₪',before=T.slice(Math.max(0,x.index-25),x.index);
+  const rem=/נותר|נשאר|יתרה|יתרת|לתשלום|לשלם|במזומן/.test(before);am.push({v,c,rem,dep:!rem&&/מקדמה/.test(before),tot:!rem&&/סה"?כ|סה״כ|סך הכל|מחיר|עלות|ביחד|יחד/.test(before)})}
+ const dep=am.find(a=>a.dep),rem=am.find(a=>a.rem),tot=am.find(a=>a.tot)||am.filter(a=>!a.dep&&!a.rem).sort((a,b)=>b.v-a.v)[0];
+ const paid=/מקדמה[^.\n]{0,25}(?:שולמה|שולם|התקבלה|הועברה|קיבלתי)|(?:שילמ|העביר|העבירו)[^.\n]{0,25}מקדמה/.test(T);
+ if(rem){
+  // "נותר לתשלום 360" = the deposit was already paid, so total = what's left + the deposit (10% of the total if not written)
+  out.cur=rem.c;out.depSt='שולם';
+  if(tot&&dep){out.total=tot.v;out.dep=dep.v}
+  else if(tot){out.total=tot.v;out.dep=Math.max(0,tot.v-rem.v)}
+  else if(dep){out.dep=dep.v;out.total=rem.v+dep.v}
+  else{out.total=Math.round(rem.v/0.9);out.dep=out.total-rem.v}
+ }else{
+  if(tot){out.total=tot.v;out.cur=tot.c}else if(dep)out.cur=dep.c;
+  if(dep){out.dep=dep.v;if(paid)out.depSt='שולם'}
+ }
  // name from a greeting: היי מאיה / שלום מאיה
  const nm=T.match(/(?:^|\s)(?:היי|הי|שלום|אהלן|הלו)\s+([א-ת][א-ת'"]{1,14})/);if(nm&&!/^(לך|לכם|לכן|רב|ותודה|שוב)$/.test(nm[1]))out.name=nm[1];
  return out;
