@@ -385,7 +385,7 @@ const table=a=>`<div class="tw"><table><thead><tr><th>תאריך</th><th>שעו�
 
 const sessRow=i=>`<div class="card sess"><b class="sl">שיעור ${i}</b>${i>1?'<button class="ghost danger" style="float:inline-end" data-act="rmSess">הסרה</button>':''}<div class="row"><div><label>תאריך</label><input type="date" class="s-date" value="${today()}"></div><div><label>משך (שעות)</label><select class="s-dur">${[1,2,3,4,5,6].map(h=>`<option value="${h}"${h===2?' selected':''}>${h}</option>`).join('')}</select></div></div><div class="row"><div><label>שעת התחלה</label><input type="time" class="s-st" value="09:00"></div><div><label>שעת סיום</label><input type="time" class="s-en" value="11:00"></div></div></div>`;
 const ageHtml=(n,v=[])=>Array.from({length:n},(_,i)=>`<div><label>גיל תלמיד${n>1?' '+(i+1):''}</label><input type="number" inputmode="numeric" min="1" class="f-age" value="${v[i]||''}"></div>`).join('');
-function bookingForm(){return `<div class="card">${sampleFn?`<div class="autofill"><label for="f-auto" style="margin-top:0">מילוי אוטומטי</label><textarea id="f-auto" rows="4" placeholder="הדבק כאן הודעה עם פרטי ההזמנה"></textarea><div class="acts"><button class="btn" id="autobtn" data-act="autoFill">העתק פרטים</button><span class="sub" id="autonote"></span></div></div>`:''}<label for="f-name">שם המזמין</label><input id="f-name" autocomplete="off">
+function bookingForm(){return `<div class="card">${1?`<div class="autofill"><label for="f-auto" style="margin-top:0">מילוי אוטומטי</label><textarea id="f-auto" rows="4" placeholder="הדבק כאן את ההודעה ששלחת ללקוח, למשל: אז קבענו ל22.1 בין 14-16 וב23.1 בין 12-13"></textarea><div class="acts"><button class="btn" id="autobtn" data-act="autoFill">מלא מההודעה</button><span class="sub" id="autonote"></span></div></div>`:''}<label for="f-name">שם המזמין</label><input id="f-name" autocomplete="off">
 <label for="f-phone">מספר טלפון</label><input id="f-phone" type="tel" inputmode="tel">
 <div class="row"><div><label for="f-n">מספר תלמידים</label><select id="f-n">${[1,2,3,4].map(n=>`<option>${n}</option>`).join('')}</select></div><div><label for="f-expt">ניסיון</label><select id="f-expt"><option value="">בחירה</option><option>${EXP1}</option><option>${EXP2}</option></select></div></div>
 <div id="expdw" hidden><label for="f-expd">פירוט הניסיון (לא חובה)</label><input id="f-expd" placeholder="למשל: 3 ימים בשנה שעברה, גולש במסלולים כחולים"></div>
@@ -529,9 +529,63 @@ function saveBooking(){
 }
 
 const tm=t=>{const m=String(t||'').match(/(\d{1,2})(?::?(\d{2}))?/);return m?String(m[1]).padStart(2,'0')+':'+(m[2]||'00'):''};
+// ---- Free auto-fill (no AI): reads the details from a pasted message by their patterns.
+// PARSER-START
+function parseMsg(txt,todayStr){
+ const T=String(txt||'').replace(/[‎‏‪-‮]/g,''),out={lessons:[]},nb='(?<![\\d:./])';
+ const MON={'ינואר':1,'פברואר':2,'מרץ':3,'מרס':3,'אפריל':4,'מאי':5,'יוני':6,'יולי':7,'אוגוסט':8,'ספטמבר':9,'אוקטובר':10,'נובמבר':11,'דצמבר':12};
+ const pad=n=>String(n).padStart(2,'0'),[ty,tm,td]=todayStr.split('-').map(Number);
+ const mkDate=(d,m,y)=>{if(!(m>=1&&m<=12&&d>=1&&d<=31))return null;if(y){y=+y;if(y<100)y+=2000}else{y=ty;if(m<tm||(m===tm&&d<td))y++}return y+'-'+pad(m)+'-'+pad(d)};
+ const hr=(h,m)=>{h=+h;m=m?+m:0;if(h<8)h+=12;return h<=23&&m<=59?pad(h)+':'+pad(m):null};
+ const tok=[];
+ // time ranges: 14-16, 14:00-16:00, בין 14 ל-16, מ-14 עד 16, 2-4 (=14:00-16:00)
+ const rRange=new RegExp(nb+'(\\d{1,2})(?:[:.](\\d{2}))?\\s*(?:-|–|—|עד|ל-?)\\s*(\\d{1,2})(?:[:.](\\d{2}))?(?!\\d|[./]\\d|\\s*(?:ב?(?:'+Object.keys(MON).join('|')+')))','g');
+ let x,used=[];
+ while((x=rRange.exec(T))){const s=hr(x[1],x[2]),e=hr(x[3],x[4]);if(s&&e&&s<e){tok.push({i:x.index,t:'time',s,e});used.push([x.index,x.index+x[0].length])}}
+ const free=i=>!used.some(([a,b])=>i>=a&&i<b);
+ // single start time: בשעה 10 / בשעה 10:30 (lesson of 2 hours)
+ const rAt=/(?:בשעה|שעה)\s*(\d{1,2})(?::(\d{2}))?(?!\s*(?:-|–|עד))/g;
+ while((x=rAt.exec(T))){if(!free(x.index))continue;const s=hr(x[1],x[2]);if(s){const [h,m]=s.split(':').map(Number);tok.push({i:x.index,t:'time',s,e:pad(Math.min(23,h+2))+':'+pad(m)})}}
+ // dates: 22.1 / 22/1 / 22.1.27 / 3 בינואר / 3 לינואר
+ const rDate=new RegExp(nb+'(\\d{1,2})[./](\\d{1,2})(?:[./](\\d{2,4}))?(?![\\d:])','g');
+ while((x=rDate.exec(T))){if(!free(x.index))continue;const d=mkDate(+x[1],+x[2],x[3]);if(d)tok.push({i:x.index,t:'date',d})}
+ const rMon=new RegExp(nb+'(\\d{1,2})\\s*(?:ב|ל)?-?\\s*('+Object.keys(MON).join('|')+')','g');
+ while((x=rMon.exec(T))){const d=mkDate(+x[1],MON[x[2]]);if(d)tok.push({i:x.index,t:'date',d})}
+ tok.sort((a,b)=>a.i-b.i);
+ let cur=null,pend=[];
+ tok.forEach(k=>{if(k.t==='date'){cur=k.d;pend.forEach(p=>out.lessons.push({date:cur,start:p.s,end:p.e}));pend=[]}else if(cur)out.lessons.push({date:cur,start:k.s,end:k.e});else pend.push(k)});
+ // phone (Israeli)
+ const ph=T.match(/(?:\+?972[-\s]?|0)5\d[-\s]?\d{3}[-\s]?\d{4}/);if(ph)out.phone=ph[0].replace(/\s/g,'');
+ // ages: בן 10 / בת 8 / בני 6 ו-8 / גילאים 23, 30
+ const ages=[],rAge=/(?:בן|בת|בני|בנות|גיל|גילאי|גילאים|גילים)\s*[-:]?\s*((?:\d{1,2}(?:\s*(?:,|ו-?|\/|&)\s*)?)+)/g;
+ while((x=rAge.exec(T)))(x[1].match(/\d{1,2}/g)||[]).forEach(a=>{a=+a;if(a>=2&&a<=90)ages.push(a)});
+ if(ages.length)out.ages=ages;
+ const W={'אחד':1,'אחת':1,'שני':2,'שתי':2,'שניים':2,'שתיים':2,'שלושה':3,'שלוש':3,'ארבעה':4,'ארבע':4};
+ const st=T.match(/(\d|אחד|אחת|שני|שתי|שניים|שתיים|שלושה|שלוש|ארבעה|ארבע)\s*(?:משתתפים|משתתפות|תלמידים|תלמידות|ילדים|ילדות|אנשים|גולשים|גולשות|בנות|בנים)/);
+ out.students=st?(+st[1]||W[st[1]]):/(?:^|\s)זוג(?:\s|$)/.test(T)?2:ages.length||undefined;
+ // experience
+ if(/פעם ראשונה|פעם הראשונה|מתחיל|מתחילה|מתחילים|אין (?:להם |לו |לה )?ני?סיון|ללא ני?סיון|בלי ני?סיון|לא גלש|לא גלשו|לא גלשה/.test(T))out.exp=EXP1;
+ else if(/ני?סיון|גלש(?:ו|ה)? (?:כבר|בעבר|פעם)|יודע(?:ים|ת)? לגלוש|מתקדמ/.test(T))out.exp=EXP2;
+ // amounts: 400 יורו / 400€ / €400 / 1500 ש"ח; near "מקדמה" = deposit
+ const am=[],rAm=/(?:(\d{2,5})\s*(€|יורו|אירו|₪|שקל(?:ים)?|ש"ח|ש״ח|שח))|(?:(€|₪)\s*(\d{2,5}))/g;
+ while((x=rAm.exec(T))){const v=+(x[1]||x[4]),c=/€|יורו|אירו/.test(x[2]||x[3])?'€':'₪',before=T.slice(Math.max(0,x.index-25),x.index);am.push({v,c,dep:/מקדמה/.test(before),tot:/סה"?כ|סה״כ|סך הכל|מחיר|עלות|ביחד|יחד/.test(before)})}
+ const dep=am.find(a=>a.dep),tot=am.find(a=>!a.dep&&a.tot)||am.filter(a=>!a.dep).sort((a,b)=>b.v-a.v)[0];
+ if(tot){out.total=tot.v;out.cur=tot.c}else if(dep)out.cur=dep.c;
+ if(dep){out.dep=dep.v;if(/מקדמה[^.\n]{0,25}(?:שולמה|שולם|התקבלה|הועברה|קיבלתי)|(?:שילמ|העביר|העבירו)[^.\n]{0,25}מקדמה/.test(T))out.depSt='שולם'}
+ // name from a greeting: היי מאיה / שלום מאיה
+ const nm=T.match(/(?:^|\s)(?:היי|הי|שלום|אהלן|הלו)\s+([א-ת][א-ת'"]{1,14})/);if(nm&&!/^(לך|לכם|לכן|רב|ותודה|שוב)$/.test(nm[1]))out.name=nm[1];
+ return out;
+}
+// PARSER-END
 async function autoFill(){
  const txt=$('#f-auto').value.trim(),n=$('#autonote'),btn=$('#autobtn');
  if(!txt){n.textContent='הדבק הודעה קודם';return}
+ if(!sampleFn){
+  const d=parseMsg(txt,today());fillFrom(d);
+  const got=[d.lessons.length?(d.lessons.length===1?'שיעור אחד':d.lessons.length+' שיעורים'):'',d.name?'שם':'',d.phone?'טלפון':'',d.ages?'גילאים':'',d.exp?'ניסיון':'',d.total?'מחיר':'',d.dep?'מקדמה':''].filter(Boolean);
+  n.textContent=got.length?'מולא: '+got.join(', ')+'. בדוק את הפרטים והשלם מה שחסר.':'לא מצאתי פרטים בהודעה. אפשר למלא ידנית.';
+  return;
+ }
  btn.disabled=true;n.textContent='קורא את ההודעה…';
  const prompt='אתה מחלץ פרטי הזמנה לשיעורי סקי מהודעה. החזר JSON בלבד עם המפתחות: name (שם המזמין), phone (מספר טלפון כפי שמופיע, או ""), students (מספר תלמידים, 1 עד 4), ages (מערך גילאים של התלמידים, מספרים), exp (ניסיון בקצרה, למשל "יש ניסיון" או "מתחילים", או ""), total (הסכום שסוכם, מספר או null), cur ("€" או "₪" או null), dep (סכום מקדמה, מספר או null), depSt ("שולם" אם נאמר שהמקדמה שולמה, "הועבר לשירה לב" אם נאמר שהועברה לשירה לב, אחרת "ממתין"), note (הערות נוספות שלא נכנסו לשדות אחרים, או ""), lessons (מערך של {date:"YYYY-MM-DD",start:"HH:MM",end:"HH:MM"}). התאריך של היום הוא '+today()+'. אם השנה חסרה, בחר את התאריך הקרוב הבא. שעות בפורמט 24 שעות. מה שלא מופיע בהודעה השאר "" או null. ההודעה:\n'+txt;
  try{fillFrom(await sampleFn.json(prompt,{modelTier:'quick'}));n.textContent='מולא. בדוק את הפרטים ותקן אם צריך.'}
@@ -613,7 +667,7 @@ document.addEventListener('change',e=>{
 });
 document.addEventListener('input',e=>{const t=e.target;if(t.id==='tpl'){tplLive();return}if(t.id==='f-dep')t.dataset.manual='1';else if(t.id==='f-total'){const d=$('#f-dep');if(d&&!d.dataset.manual)d.value=Math.round((+t.value||0)*10)/100||''}cash()});
 
-// Auto-fill is hidden for now (it needs a server-side Anthropic API call). While sampleFn is null the box doesn't show.
+// sampleFn stays null: auto-fill uses the free pattern reader (parseMsg). An AI version could plug in here later.
 let sampleFn=null;
 render();
 if(sb)sb.auth.onAuthStateChange((ev,session)=>{
