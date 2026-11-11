@@ -284,9 +284,11 @@ const waNum=b=>{let p=(b.phone||'').replace(/\D/g,'').replace(/^00/,'');if(p.sta
 // Reminder message: each user writes their own (saved as S.tpl, synced). Placeholders are filled per lesson.
 // {תאריכים ושעות} expands to every upcoming lesson of the booking, one per line (the reminder is sent once, before the first lesson).
 const DEF_TPL='היי {שם}! ⛷️\nתזכורת לגבי הסקי בגודאורי:\n{תאריכים ושעות}\n\nנתראה על השלג! אם משהו משתנה, אפשר לכתוב לי כאן.';
-const TPL_KEYS=[['{שם}','שם המזמין'],['{תאריכים ושעות}','תאריכים ושעות']];
+const TPL_KEYS=[['{שם}','שם המזמין'],['{תאריכים ושעות}','תאריכים ושעות'],['{משתתפים}','משתתפים, גילאים וניסיון'],['{נשאר לתשלום}','נשאר לתשלום במזומן']];
+// {משתתפים}: "משתתף אחד בגיל 10, יש ניסיון" / "2 משתתפים בגילאים 23, 30, פעם ראשונה"
+const peopleTxt=b=>{const a=(b.ages||[]).filter(Boolean),n=b.n||a.length||1;return [(n===1?'משתתף אחד':n+' משתתפים')+(a.length?(a.length>1?' בגילאים ':' בגיל ')+a.join(', '):''),b.exp].filter(Boolean).join(', ')};
 const lessonsTxt=l=>{const L=S.lessons.filter(x=>x.bid===l.bid&&x.date>=today()).sort(cmp),A=L.length?L:[l],ln=x=>fmtD(x.date)+', '+x.start+'–'+x.end;return A.length===1?ln(A[0]):A.map(x=>'• '+ln(x)).join('\n')};
-const remMsg=l=>{const b=bOf(l);return (S.tpl||DEF_TPL).split('{שם}').join(first(b.name)).split('{תאריכים ושעות}').join(lessonsTxt(l)).split('{תאריך}').join(fmtD(l.date)).split('{שעה}').join(l.start).split('{סיום}').join(l.end)};
+const remMsg=l=>{const b=bOf(l);return (S.tpl||DEF_TPL).split('{שם}').join(first(b.name)).split('{תאריכים ושעות}').join(lessonsTxt(l)).split('{משתתפים}').join(peopleTxt(b)).split('{נשאר לתשלום}').join(money(remOf(b),b.cur)).split('{תאריך}').join(fmtD(l.date)).split('{שעה}').join(l.start).split('{סיום}').join(l.end)};
 const waUrl=l=>waLink(waNum(bOf(l)),remMsg(l));
 const icoOk='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
 const waLink=(p,m)=>'https://wa.me/'+p+(m?'?text='+encodeURIComponent(m):'');
