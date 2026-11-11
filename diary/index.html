@@ -281,7 +281,11 @@ const depTxt=b=>b.dep?money(b.dep,b.cur)+' ('+b.depSt+')':'ללא';
 const calDesc=b=>{const a=(b.ages||[]).filter(Boolean),n=b.n||a.length||1;return ['מספר גולשים: '+n,a.length?'גילאים: '+a.join(', '):'',b.exp?'ניסיון: '+b.exp:'','מחיר: '+money(b.total,b.cur),'מקדמה: '+depTxt(b),'נשאר לתשלום במזומן: '+money(remOf(b),b.cur),b.phone?'טלפון: '+b.phone:'',b.note?'הערות: '+b.note:''].filter(Boolean).join('\n')};
 const calUrl=l=>{const b=bOf(l),z=(d,t)=>{const[y,mo,da]=d.split('-').map(Number),[h,mi]=t.split(':').map(Number);return new Date(Date.UTC(y,mo-1,da,h-4,mi)).toISOString().replace(/[-:]|\.\d{3}/g,'')};return 'https://calendar.google.com/calendar/render?action=TEMPLATE&text='+encodeURIComponent(b.name)+'&dates='+z(l.date,l.start)+'/'+z(l.date,l.end)+'&location='+encodeURIComponent('Gudauri, Georgia')+'&details='+encodeURIComponent(calDesc(b))};
 const waNum=b=>{let p=(b.phone||'').replace(/\D/g,'').replace(/^00/,'');if(p.startsWith('0'))p='972'+p.slice(1);return p};
-const waUrl=l=>{const b=bOf(l),p=waNum(b);const m='היי '+first(b.name)+', תזכורת לשיעור סקי ב'+fmtD(l.date)+' בשעה '+l.start+'. נתראה!';return waLink(p,m)};
+// Reminder message: each user writes their own (saved as S.tpl, synced). Placeholders are filled per lesson.
+const DEF_TPL='היי {שם}, תזכורת לשיעור סקי ב{תאריך} בשעה {שעה}. נתראה!';
+const TPL_KEYS=[['{שם}','שם פרטי'],['{תאריך}','תאריך'],['{שעה}','שעת התחלה'],['{סיום}','שעת סיום']];
+const remMsg=l=>{const b=bOf(l);return (S.tpl||DEF_TPL).split('{שם}').join(first(b.name)).split('{תאריך}').join(fmtD(l.date)).split('{שעה}').join(l.start).split('{סיום}').join(l.end)};
+const waUrl=l=>waLink(waNum(bOf(l)),remMsg(l));
 const icoOk='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
 const waLink=(p,m)=>'https://wa.me/'+p+(m?'?text='+encodeURIComponent(m):'');
 const act=(l,c)=>{const p=waNum(bOf(l));return `<a class="ibtn" data-act="cal" data-id="${l.id}" href="${l.cal?dayUrl(l):calUrl(l)}" target="_blank" rel="noopener" title="${l.cal?'פתיחה ב-Google Calendar':'הוספה ל-Google Calendar'}" aria-label="${l.cal?'פתיחה ב-Google Calendar':'הוספה ל-Google Calendar'}">${l.cal?'<span class="chk">'+icoOk+'</span>':''}${icoCal}${c?'':' יומן'}</a>${p?`<a class="ibtn" href="${waLink(p,'')}" target="_blank" rel="noopener" title="וואטסאפ" aria-label="וואטסאפ">${icoWa}${c?'':' וואטסאפ'}</a>`:''}`};
@@ -355,16 +359,27 @@ const nextOf=id=>S.lessons.filter(l=>l.bid===id&&l.date>=today()).sort(cmp)[0];
 const remList=()=>S.bookings.map(b=>({b,l:nextOf(b.id)})).filter(x=>x.l&&x.l.date<=addD(today(),7)).sort((a,c)=>cmp(a.l,c.l));
 const remCard=(b,l,top)=>{const p=waNum(b),when=`${l.date===today()?'היום':fmtD(l.date)}, ${l.start}–${l.end}`;
  const btn=!p?`<button class="ghost" style="font-size:.78rem;padding:4px 10px" data-act="edit" data-id="${b.id}">הוסף מספר טלפון כדי לשלוח תזכורת</button>`
-  :(b.rem?'<span class="pill">✓ תזכורת נשלחה</span>':`<a class="${top?'btn':'ibtn'}" data-act="remind" data-id="${b.id}" href="${waUrl(l)}" target="_blank" rel="noopener">${icoWa} שלח תזכורת</a>`)+`<a class="ibtn" href="${waLink(p,'')}" target="_blank" rel="noopener" title="צ׳אט בוואטסאפ" aria-label="צ׳אט בוואטסאפ">${icoWa} צ׳אט</a>`;
+  :(b.rem?`<button class="pill" style="border:0" data-act="unrem" data-id="${b.id}" title="לחיצה תבטל את הסימון">✓ תזכורת נשלחה</button>`:`<a class="${top?'btn':'ibtn'}" data-act="remind" data-id="${b.id}" data-l="${l.id}" href="${waUrl(l)}" target="_blank" rel="noopener">${icoWa} שלח תזכורת</a>`)+`<a class="ibtn" href="${waLink(p,'')}" target="_blank" rel="noopener" title="צ׳אט בוואטסאפ" aria-label="צ׳אט בוואטסאפ">${icoWa} צ׳אט</a>`;
  return `<div class="card"><div class="nm">${esc(b.name)}</div><div class="sub">${when}</div><div class="acts">${btn}</div></div>`};
 function vRemind(){
  const t=today(),all=S.lessons.filter(l=>l.date>=t).sort(cmp),lim=addD(t,2),due=remList().filter(x=>!x.b.rem&&x.l.date<=lim);
  let h='<h2>תזכורות לשלוח, יומיים לפני השיעור</h2>';
  h+=due.length?due.map(({b,l})=>remCard(b,l,true)).join(''):'<div class="nolsn">אין תזכורות לשלוח כרגע.</div>';
+ const ex=all.find(l=>waNum(bOf(l)))||all[0];
+ h+=`<details class="ent" id="tpld" style="margin-top:14px"${tplOpen?' open':''}><summary><b>נוסח הודעת התזכורת</b><span>עריכה</span></summary><div class="det">
+<textarea id="tpl" rows="4" dir="rtl">${esc(S.tpl||DEF_TPL)}</textarea>
+<div class="sub" style="margin-top:6px">לחץ כדי להוסיף להודעה פרט שמתמלא לבד:</div>
+<div class="acts">${TPL_KEYS.map(([k,t])=>`<button class="ghost" data-act="tplIns" data-id="${k}">${t}</button>`).join('')}</div>
+${ex?`<div class="sub" style="margin-top:10px">דוגמה: <span id="tplex">${esc(remMsg(ex))}</span></div>`:''}
+<div class="acts"><button class="ghost" data-act="tplReset">חזרה לנוסח המקורי</button></div></div></details>`;
  h+='<h2>כל השיעורים</h2>';
  h+=all.length?all.map(l=>remCard(bOf(l),l,false)).join(''):'<div class="empty">אין שיעורים קרובים.</div>';
  return h;
 }
+let tplOpen=false;
+// Live update while typing: refresh the reminder links and the example without re-rendering (keeps the keyboard open).
+function tplLive(){const t=$('#tpl');if(!t)return;S.tpl=t.value.trim()===DEF_TPL?'':t.value;$$('[data-act=remind][data-l]').forEach(a=>{const l=S.lessons.find(x=>x.id===a.dataset.l);if(l)a.href=waUrl(l)});const ex=$('#tplex'),al=S.lessons.filter(l=>l.date>=today()).sort(cmp),l=al.find(x=>waNum(bOf(x)))||al[0];if(ex&&l)ex.textContent=remMsg(l)}
+document.addEventListener('toggle',e=>{if(e.target.id==='tpld')tplOpen=e.target.open},true);
 const paidOf=b=>(b.depSt!=='ממתין'?+b.dep||0:0)+(+b.paid||0);
 const recOf=b=>(b.depSt==='שולם'?+b.dep||0:0)+(+b.paid||0);
 const remOf=b=>Math.max(0,(+b.total||0)-paidOf(b));
@@ -456,7 +471,10 @@ document.addEventListener('click',e=>{
  if(a==='exp'){exportFile();return}
  if(a==='logout'){logout();return}
  if(a==='impNo'){impData=null;$('#impq').innerHTML='';return}
- if(a==='impYes'){if(impData){S={bookings:impData.bookings,lessons:impData.lessons};mig();tab='lessons';adding=false;editId=null;calD=null;save();impData=null;$('#impq').innerHTML='<div class="okmsg">✓ הנתונים יובאו</div>';render()}return}
+ if(a==='tplIns'){const t=$('#tpl');if(t){const s=t.selectionStart??t.value.length,e2=t.selectionEnd??s;t.value=t.value.slice(0,s)+id+t.value.slice(e2);t.focus();t.selectionStart=t.selectionEnd=s+id.length;tplLive();save()}return}
+ if(a==='tplReset'){S.tpl='';save();render();return}
+ if(a==='unrem'){const x=S.bookings.find(y=>y.id===id);if(x){x.rem=false;save()}render();return}
+ if(a==='impYes'){if(impData){S={bookings:impData.bookings,lessons:impData.lessons,tpl:impData.tpl||S.tpl||''};mig();tab='lessons';adding=false;editId=null;calD=null;save();impData=null;$('#impq').innerHTML='<div class="okmsg">✓ הנתונים יובאו</div>';render()}return}
  if(a==='tab'){tab=id;adding=false;editId=null;confirmId=null;calMenu=null}
  else if(a==='edit'){editId=id;tab='lessons';adding=false;confirmId=null;window.scrollTo(0,0)}
  else if(a==='addB'){adding=true;editId=null}
@@ -486,12 +504,13 @@ document.addEventListener('click',e=>{
 document.addEventListener('change',e=>{
  const t=e.target;
  if(t.id==='impf'){readImp(t.files[0]);return}
+ if(t.id==='tpl'){tplLive();save();return}
  if(t.id==='f-n'){$('#ages').innerHTML=ageHtml(+t.value,$$('.f-age').map(i=>i.value))}
  else if(t.classList.contains('s-st')||t.classList.contains('s-en')){const r=t.closest('.sess'),s=r.querySelector('.s-st').value,en=r.querySelector('.s-en').value;if(s&&en)r.querySelector('.s-dur').value=autoDur(s,en)}
  else if(t.dataset.f){const b=S.bookings.find(x=>x.id===t.dataset.id);if(b){b[t.dataset.f]=t.tagName==='SELECT'?t.value:(+t.value||0);save();render()}}
  cash();
 });
-document.addEventListener('input',e=>{const t=e.target;if(t.id==='f-dep')t.dataset.manual='1';else if(t.id==='f-total'){const d=$('#f-dep');if(d&&!d.dataset.manual)d.value=Math.round((+t.value||0)*10)/100||''}cash()});
+document.addEventListener('input',e=>{const t=e.target;if(t.id==='tpl'){tplLive();return}if(t.id==='f-dep')t.dataset.manual='1';else if(t.id==='f-total'){const d=$('#f-dep');if(d&&!d.dataset.manual)d.value=Math.round((+t.value||0)*10)/100||''}cash()});
 
 // Auto-fill is hidden for now (it needs a server-side Anthropic API call). While sampleFn is null the box doesn't show.
 let sampleFn=null;
