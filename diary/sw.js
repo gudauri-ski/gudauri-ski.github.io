@@ -2,7 +2,7 @@
 // The app page itself: network first (so updates arrive), cached copy when offline.
 // Icons, fonts and the Supabase library: cached copy first.
 // Supabase data requests are never cached.
-const CACHE = 'ski-diary-v1';
+const CACHE = 'ski-diary-v2';
 const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
@@ -28,7 +28,8 @@ self.addEventListener('fetch', e => {
 
   if (isPage) {
     e.respondWith(
-      fetch(req)
+      // no-cache: always ask GitHub for the newest page (its default is to let browsers reuse a copy for 10 minutes)
+      fetch(req.url, { cache: 'no-cache', credentials: 'same-origin' })
         .then(res => {
           const copy = res.clone();
           caches.open(CACHE).then(c => c.put('index.html', copy));
