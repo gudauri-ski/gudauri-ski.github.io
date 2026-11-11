@@ -165,7 +165,11 @@ const bOf=l=>S.bookings.find(b=>b.id===l.bid)||{};
 const setStatus=t=>{const o=$('#toast');o.textContent=t;o.className='show';clearTimeout(setStatus.t);setStatus.t=setTimeout(()=>{o.className=''},2200)};
 const err=m=>{const e=$('#err');if(e)e.textContent=m};
 const DEP=['ממתין','שולם','הועבר לשירה לב'];
-const mig=()=>{S.bookings.forEach(b=>{if(b.depSt==='שילם')b.depSt='שולם';else if(b.depSt==='לא שילם')b.depSt='ממתין'});S.bookings=S.bookings.filter(b=>S.lessons.some(l=>l.bid===b.id))};
+// Experience: a choice (first time / previous experience) + optional details. b.exp keeps the combined text for every display.
+const EXP1='פעם ראשונה',EXP2='ניסיון קודם';
+const expJoin=(t,d)=>t?(t===EXP2&&d?t+' ('+d+')':t):'';
+const expSplit=b=>{if(b.expT!=null)return [b.expT,b.expD||''];const x=(b.exp||'').trim();if(!x)return ['',''];if(/ראשונ|מתחיל|אין ניסיון|ללא ניסיון|בלי ניסיון/.test(x))return [EXP1,''];if(/^(יש ניסיון|ניסיון קודם|ניסיון|עם ניסיון)$/.test(x))return [EXP2,''];return [EXP2,x]};
+const mig=()=>{S.bookings.forEach(b=>{if(b.depSt==='שילם')b.depSt='שולם';else if(b.depSt==='לא שילם')b.depSt='ממתין';if(b.expT==null&&b.exp){const[t,d]=expSplit(b);b.expT=t;b.expD=d;b.exp=expJoin(t,d)}});S.bookings=S.bookings.filter(b=>S.lessons.some(l=>l.bid===b.id))};
 const icoCal='<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3" fill="#fff" stroke="#4285F4" stroke-width="1.6"/><path d="M3 6a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3v3H3z" fill="#4285F4"/><text x="12" y="19" text-anchor="middle" font-size="9" font-weight="700" fill="#4285F4" font-family="Arial,sans-serif">31</text></svg>';
 const icoWa='<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#25D366"/><path fill="#fff" d="M7.5 6.5c.6-.6 1.3-.5 1.6.2l.8 1.8c.2.5 0 .9-.3 1.3l-.5.6c.8 1.6 1.8 2.6 3.4 3.4l.6-.5c.4-.3.9-.5 1.4-.3l1.7.8c.7.3.8 1 .2 1.6-.9 1-2 1.3-3.3.8-3-1.1-5.2-3.3-6.3-6.3-.5-1.3-.2-2.4.7-3.4z"/></svg>';
 const icoDel='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 3h4M6 7l1 13h10l1-13M10 11v6M14 11v6"/></svg>';
@@ -305,7 +309,8 @@ const sessRow=i=>`<div class="card sess"><b class="sl">שיעור ${i}</b>${i>1?
 const ageHtml=(n,v=[])=>Array.from({length:n},(_,i)=>`<div><label>גיל תלמיד${n>1?' '+(i+1):''}</label><input type="number" inputmode="numeric" min="1" class="f-age" value="${v[i]||''}"></div>`).join('');
 function bookingForm(){return `<div class="card">${sampleFn?`<div class="autofill"><label for="f-auto" style="margin-top:0">מילוי אוטומטי</label><textarea id="f-auto" rows="4" placeholder="הדבק כאן הודעה עם פרטי ההזמנה"></textarea><div class="acts"><button class="btn" id="autobtn" data-act="autoFill">העתק פרטים</button><span class="sub" id="autonote"></span></div></div>`:''}<label for="f-name">שם המזמין</label><input id="f-name" autocomplete="off">
 <label for="f-phone">מספר טלפון</label><input id="f-phone" type="tel" inputmode="tel">
-<div class="row"><div><label for="f-n">מספר תלמידים</label><select id="f-n">${[1,2,3,4].map(n=>`<option>${n}</option>`).join('')}</select></div><div><label for="f-exp">ניסיון</label><input id="f-exp" placeholder="למשל: יש ניסיון"></div></div>
+<div class="row"><div><label for="f-n">מספר תלמידים</label><select id="f-n">${[1,2,3,4].map(n=>`<option>${n}</option>`).join('')}</select></div><div><label for="f-expt">ניסיון</label><select id="f-expt"><option value="">בחירה</option><option>${EXP1}</option><option>${EXP2}</option></select></div></div>
+<div id="expdw" hidden><label for="f-expd">פירוט הניסיון (לא חובה)</label><input id="f-expd" placeholder="למשל: 3 ימים בשנה שעברה, גולש במסלולים כחולים"></div>
 <div class="ages" id="ages">${ageHtml(1)}</div>
 <h3>שיעורים</h3><div id="sess">${sessRow(1)}</div><div class="acts"><button class="ghost" data-act="addSess">+ הוספת שיעור נוסף להזמנה</button></div>
 <h3>תשלום</h3>
@@ -418,11 +423,12 @@ function addSess(){
  ['s-st','s-en','s-dur'].forEach(c=>n.querySelector('.'+c).value=last.querySelector('.'+c).value);
 }
 const cash=()=>{const o=$('#f-cash');if(!o)return;const t=+$('#f-total').value||0,d=+$('#f-dep').value||0;o.textContent=money(Math.max(0,t-($('#f-depst').value!=='ממתין'?d:0)),$('#f-cur').value)};
+function setExp(t,d){const s=$('#f-expt');if(!s)return;s.value=t||'';$('#f-expd').value=d||'';$('#expdw').hidden=s.value!==EXP2}
 function fillForm(b){
  $('#f-name').closest('.card').insertAdjacentHTML('afterbegin','<div class="nm">עריכת הזמנה</div>');
  $('#f-name').value=b.name;$('#f-phone').value=b.phone||'';
  $('#f-n').value=b.n||1;$('#ages').innerHTML=ageHtml(+$('#f-n').value,b.ages||[]);
- $('#f-exp').value=b.exp||'';$('#f-note').value=b.note||'';
+ setExp(...expSplit(b));$('#f-note').value=b.note||'';
  $('#f-total').value=b.total||'';$('#f-cur').value=b.cur;$('#f-dep').value=b.dep||'';$('#f-depst').value=b.depSt;$('#f-dep').dataset.manual='1';
  const L=S.lessons.filter(l=>l.bid===b.id).sort(cmp);
  if(L.length){$('#sess').innerHTML=L.map((l,i)=>sessRow(i+1)).join('');$$('#sess .sess').forEach((r,i)=>{const l=L[i];r.dataset.id=l.id;r.querySelector('.s-date').value=l.date;r.querySelector('.s-st').value=l.start;r.querySelector('.s-en').value=l.end;r.querySelector('.s-dur').value=l.dur})}
@@ -432,7 +438,7 @@ function saveBooking(){
  const name=$('#f-name').value.trim();if(!name){err('הכנס שם המזמין');return false}
  const rows=$$('#sess .sess').map(r=>({id:r.dataset.id||'',date:r.querySelector('.s-date').value,start:r.querySelector('.s-st').value,end:r.querySelector('.s-en').value,dur:+r.querySelector('.s-dur').value}));
  if(rows.some(r=>!r.date||!r.start||!r.end)){err('חסרים תאריך או שעות באחד השיעורים');return false}
- const b={id:uid(),name,phone:$('#f-phone').value.trim(),n:+$('#f-n').value,ages:$$('.f-age').map(i=>+i.value||0),exp:$('#f-exp').value.trim(),note:$('#f-note').value.trim(),cur:$('#f-cur').value,total:+$('#f-total').value||0,dep:+$('#f-dep').value||0,depSt:$('#f-depst').value,paid:0};
+ const b={id:uid(),name,phone:$('#f-phone').value.trim(),n:+$('#f-n').value,ages:$$('.f-age').map(i=>+i.value||0),expT:$('#f-expt').value,expD:$('#f-expt').value===EXP2?$('#f-expd').value.trim():'',exp:expJoin($('#f-expt').value,$('#f-expd').value.trim()),note:$('#f-note').value.trim(),cur:$('#f-cur').value,total:+$('#f-total').value||0,dep:+$('#f-dep').value||0,depSt:$('#f-depst').value,paid:0};
  const oc={};S.lessons.forEach(l=>{if(l.cal)oc[l.id]=l.date+l.start+l.end});
  if(editId){const o=S.bookings.find(x=>x.id===editId);Object.assign(o,{...b,id:o.id,paid:o.paid,rem:o.rem});b.id=o.id;S.lessons=S.lessons.filter(l=>l.bid!==editId)}else S.bookings.push(b);
  rows.forEach(r=>S.lessons.push({...r,id:r.id||uid(),bid:b.id,cal:oc[r.id]===r.date+r.start+r.end}));adding=false;editId=null;save();return true;
@@ -450,7 +456,7 @@ async function autoFill(){
 }
 function fillFrom(d){
  const set=(id,v)=>{const e=$(id);if(e&&v!=null&&v!=='')e.value=v};
- set('#f-name',d.name);set('#f-phone',d.phone);set('#f-exp',d.exp);set('#f-note',d.note);
+ set('#f-name',d.name);set('#f-phone',d.phone);if(d.exp)setExp(...expSplit({exp:d.exp}));set('#f-note',d.note);
  const ag=(d.ages||[]).map(x=>+x||''),n=Math.min(4,Math.max(1,+d.students||ag.length||1));
  $('#f-n').value=n;$('#ages').innerHTML=ageHtml(n,ag);
  if(d.cur==='€'||d.cur==='₪')$('#f-cur').value=d.cur;
@@ -509,6 +515,7 @@ document.addEventListener('change',e=>{
  const t=e.target;
  if(t.id==='impf'){readImp(t.files[0]);return}
  if(t.id==='tpl'){tplLive();save();return}
+ if(t.id==='f-expt'){setExp(t.value,$('#f-expd').value);return}
  if(t.id==='f-n'){$('#ages').innerHTML=ageHtml(+t.value,$$('.f-age').map(i=>i.value))}
  else if(t.classList.contains('s-st')||t.classList.contains('s-en')){const r=t.closest('.sess'),s=r.querySelector('.s-st').value,en=r.querySelector('.s-en').value;if(s&&en)r.querySelector('.s-dur').value=autoDur(s,en)}
  else if(t.dataset.f){const b=S.bookings.find(x=>x.id===t.dataset.id);if(b){b[t.dataset.f]=t.tagName==='SELECT'?t.value:(+t.value||0);save();render()}}
