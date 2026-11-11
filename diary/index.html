@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>יומן שיעורי סקי</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<meta name="theme-color" content="#f3f7fa" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0e1b25" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="יומן סקי">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;500;700&family=Secular+One&display=swap">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.min.js"></script>
+<style>
+:root{--bg:#f3f7fa;--card:#fff;--ink:#10283a;--mute:#5b7183;--line:#d9e3ea;--brand:#1d5f8a;--onbrand:#fff;--accent:#e8502e;--ok:#1b7a52;--okbg:#dff3ea;--danger:#d33;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1b25;--card:#162a38;--ink:#e8f1f7;--mute:#97aebd;--line:#26414f;--brand:#6fb4dd;--onbrand:#0e1b25;--accent:#ff7a59;--ok:#58d39c;--okbg:#173b2e;--danger:#ff7b72;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0e1b25;--card:#162a38;--ink:#e8f1f7;--mute:#97aebd;--line:#26414f;--brand:#6fb4dd;--onbrand:#0e1b25;--accent:#ff7a59;--ok:#58d39c;--okbg:#173b2e;--danger:#ff7b72;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Assistant,"Segoe UI",Arial,sans-serif;line-height:1.5;padding-bottom:84px}
+main,header{max-width:620px;margin:0 auto;padding:0 16px}
+header{padding-top:22px;padding-bottom:6px}
+.hd{display:flex;align-items:center;gap:14px}
+.logo{width:70px;height:70px;flex:none}
+.logo .cv,.logo .mt{fill:var(--brand)}.logo .pg{fill:var(--line)}.logo .sn{fill:#fff}
+.logo .fl{stroke:var(--brand);stroke-width:1.6;stroke-linecap:round;fill:none}
+.logo .rg circle{fill:var(--card);stroke:var(--brand);stroke-width:1}
+h1{font-family:"Secular One",Assistant,Arial,sans-serif;font-size:1.9rem;margin:0;font-weight:400}
+#status{font-size:.78rem;color:var(--mute);margin-top:2px}
+h2{font-size:1rem;margin:22px 0 8px;color:var(--mute);font-weight:500}
+h3{font-size:.95rem;margin:18px 0 4px;color:var(--mute);font-weight:500}
+.card{position:relative;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:10px}
+.lesson{display:flex;gap:14px;align-items:flex-start}
+.when{display:flex;flex-direction:column;min-width:66px;border-inline-end:3px solid var(--brand);padding-inline-end:12px}
+.when b{font-size:1.2rem;line-height:1.2}.when span{font-size:.78rem;color:var(--mute)}
+.info{flex:1;min-width:0}.nm{font-weight:700}.sub{font-size:.88rem;color:var(--mute)}
+.acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;align-items:center}
+button,select,input,textarea{font:inherit}
+button{cursor:pointer}
+.btn{background:var(--brand);color:var(--onbrand);border:0;border-radius:10px;padding:10px 16px;font-weight:500}
+.btn.full{width:100%;padding:13px;font-size:1.02rem}
+.ghost{background:transparent;border:1px solid var(--line);border-radius:10px;padding:6px 12px;color:var(--mute);font-size:.86rem}
+.ghost.danger{color:var(--danger);border-color:var(--danger)}
+.pill{border-radius:99px;padding:6px 12px;font-size:.86rem;font-weight:500;background:var(--okbg);color:var(--ok)}
+.ibtn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:10px;padding:6px 10px;font-size:.86rem;color:var(--ink);text-decoration:none;background:transparent}
+.ibtn.done{color:var(--ok);border-color:var(--ok);background:var(--okbg)}
+.ibtn svg{width:18px;height:18px}
+a.btn{text-decoration:none;display:inline-flex;align-items:center;gap:6px}a.btn svg{width:18px;height:18px}
+.trash{position:absolute;inset-block-start:8px;inset-inline-end:8px;background:none;border:0;color:var(--danger);padding:4px;border-radius:8px;font-size:.78rem;line-height:1}
+.trash svg{width:18px;height:18px;display:block}
+.trash.on{background:var(--danger);color:#fff;padding:5px 9px}
+.trash.edit{inset-inline-end:42px;color:var(--mute)}
+.tw .trash{position:static}
+label{display:block;font-size:.86rem;color:var(--mute);margin:10px 0 3px}
+input,select,textarea{width:100%;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+.row>*{min-width:0}
+input[type=date],input[type=time]{min-width:0;max-width:100%;-webkit-appearance:none;appearance:none;min-height:44px}
+@media (max-width:340px){.row{grid-template-columns:minmax(0,1fr)}}
+.ages{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px}
+.sess{background:var(--bg);margin-top:8px}.sess .sl{font-size:.9rem}
+.cashline{margin-top:12px;font-size:.95rem}.cashline b{color:var(--accent)}
+#err{color:var(--danger);font-size:.88rem;min-height:1.2em;margin-top:8px}
+.empty{text-align:center;color:var(--mute);padding:28px 8px}
+.sum{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}
+.sum .card{margin:0}.sum small{color:var(--mute);display:block;font-size:.82rem}
+.sum b{font-family:"Secular One",Assistant,Arial,sans-serif;font-weight:400;font-size:1.4rem}.sum .due b{color:var(--accent)}
+.remain{margin-top:12px}
+details summary{cursor:pointer;color:var(--mute);margin:20px 0 8px}
+.seg{display:flex;margin:14px 0 4px;border:1px solid var(--line);border-radius:10px;overflow:hidden;width:max-content}
+.seg button{background:var(--card);border:0;padding:8px 18px;color:var(--mute)}
+.seg button[aria-pressed=true]{background:var(--brand);color:var(--onbrand);font-weight:500}
+.tw{overflow-x:auto;margin-top:10px;border:1px solid var(--line);border-radius:12px;background:var(--card)}
+table{border-collapse:collapse;width:100%;font-size:.9rem}
+th,td{padding:9px 10px;text-align:start;border-bottom:1px solid var(--line);white-space:nowrap}
+th{color:var(--mute);font-weight:500;font-size:.82rem}
+td:last-child{white-space:normal;min-width:120px}
+tbody tr:last-child td{border-bottom:0}
+.tact{display:flex;gap:6px;align-items:center}
+.calhd{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:14px}.calhd b{font-size:1.05rem}
+.calgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:10px}
+.dow{text-align:center;font-size:.78rem;color:var(--mute)}
+.day{min-height:64px;min-width:0;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:4px 3px;display:flex;flex-direction:column;gap:2px;text-align:start;color:var(--ink)}
+.day .dn{font-size:.8rem;font-weight:500}.day.tod .dn{color:var(--accent);font-weight:700}
+.day.sel{border-color:var(--brand);box-shadow:0 0 0 2px var(--brand)}
+.chip{display:block;background:var(--brand);color:var(--onbrand);border-radius:5px;font-size:.62rem;padding:1px 3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.more{font-size:.62rem;color:var(--mute)}
+.ent{background:var(--card);border:1px solid var(--line);border-radius:12px;margin-bottom:8px}
+.ent summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:11px 14px}
+.ent summary::-webkit-details-marker{display:none}
+.ent summary span{font-size:.82rem;color:var(--mute)}
+.det{padding:10px 14px 12px;border-top:1px solid var(--line)}
+.det .trash{position:static}
+.nolsn{color:var(--mute);font-size:.88rem;padding:2px 2px 8px}
+.tl{display:grid;margin-top:10px}
+.axis{position:relative}
+.hl{position:absolute;inset-inline-start:0;font-size:.66rem;color:var(--mute)}
+.thd{display:flex;align-items:center;justify-content:center}
+.thd .ghost{padding:2px 4px;font-size:.72rem}
+.thd.tod .ghost{color:var(--accent);border-color:var(--accent)}
+.tbody{position:relative;border-inline-start:1px solid var(--line);background-color:var(--card);background-image:repeating-linear-gradient(to bottom,transparent 0,transparent calc(var(--hp) - 1px),var(--line) calc(var(--hp) - 1px),var(--line) var(--hp))}
+.blk{position:absolute;inset-inline:2px;background:var(--brand);color:var(--onbrand);border:0;border-radius:7px;padding:2px 4px;font-size:.66rem;line-height:1.15;overflow:hidden;text-align:start;display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start}
+.blk span{opacity:.85}.blk.on{outline:3px solid var(--accent)}
+.tl.day .blk{font-size:.88rem;padding:6px 10px;border-radius:9px}
+#toast{position:fixed;inset-inline:0;bottom:calc(76px + env(safe-area-inset-bottom,0px));margin:auto;width:max-content;max-width:90%;background:var(--ink);color:var(--bg);padding:8px 18px;border-radius:99px;font-size:.92rem;opacity:0;transition:opacity .2s;pointer-events:none;z-index:9}
+#toast.show{opacity:1}
+.cmenu{flex-basis:100%;display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:8px;background:var(--bg);border:1px solid var(--line);border-radius:10px}
+#ask{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:20px;z-index:20}
+#ask[hidden]{display:none}
+.askbox{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;max-width:380px;width:100%}
+.ibtn .chk{display:inline-flex}.ibtn .chk svg{width:14px;height:14px}
+.autofill{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:10px}
+nav{position:fixed;inset:auto 0 0 0;background:var(--card);border-top:1px solid var(--line);display:flex;padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px));z-index:5}
+nav button{flex:1;background:none;border:0;padding:10px 4px;border-radius:10px;color:var(--mute);font-weight:500}
+nav button[aria-current=true]{color:var(--brand);background:var(--bg);font-weight:700}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+body.noauth nav{display:none}
+.acctb{margin-inline-start:auto;flex:none;width:42px;height:42px;display:inline-flex;align-items:center;justify-content:center;background:transparent;border:1px solid var(--line);border-radius:99px;color:var(--mute)}
+.acctb svg{width:22px;height:22px}
+.acctb[hidden]{display:none}
+#acctm{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:20px;z-index:20}
+#acctm[hidden]{display:none}
+.stack{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.stack .ghost{padding:10px 12px;font-size:.95rem;text-align:center;margin:0;display:block}
+.linkb{background:none;border:0;color:var(--brand);padding:6px 2px;font-size:.92rem;text-decoration:underline}
+.okmsg{color:var(--ok);font-size:.9rem;margin-top:8px}
+</style>
+</head>
+<body>
+<header>
+<div class="hd"><svg class="logo" viewBox="10 10 46 52" aria-hidden="true"><rect class="cv" x="15" y="14" width="36" height="46" rx="6"/><rect class="pg" x="20" y="19" width="26" height="36" rx="3"/><path class="fl" d="M40 22v10M35 27h10M36.5 23.5l7 7M43.5 23.5l-7 7"/><path class="mt" d="M21 51 L29.5 34 L34.5 42 L38 37.5 L45 51 Z"/><path class="sn" d="M29.5 34 L32 38 L30.5 37.2 L29.5 39 L28.3 37.3 L26.8 39.1 Z"/><g class="rg"><circle cx="15" cy="26" r="2.3"/><circle cx="15" cy="37" r="2.3"/><circle cx="15" cy="48" r="2.3"/></g></svg><h1>יומן שיעורי סקי</h1><button class="acctb" id="acct" data-act="acct" aria-label="החשבון שלי" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg></button></div>
+</header>
+<main id="main"></main>
+<div id="toast" role="status"></div>
+<div id="ask" hidden><div class="askbox"><div id="askq"><p id="asktxt" class="nm"></p><p class="sub">כן: ימחק כאן, ואראה לך קישורים לימים של האירועים ב-Google Calendar כדי שתמחק אותם שם. לא: ימחק רק כאן.</p><div class="acts"><button class="btn" data-act="askYes">כן</button><button class="ghost" data-act="askNo">לא</button><button class="ghost" data-act="askCancel">ביטול</button></div></div><div id="askl" hidden><p class="nm">למחיקה ב-Google Calendar</p><p class="sub">לחץ על כל יום, מצא את האירוע של <span id="askname"></span> ומחק אותו.</p><div id="asklist"></div><div class="acts"><button class="ghost" data-act="askDone">סיימתי</button></div></div></div></div>
+<div id="acctm" hidden><div class="askbox"><p class="nm" style="margin:0">החשבון שלי</p><p class="sub" id="acctmail" dir="ltr" style="text-align:start;margin:4px 0 0"></p><div class="stack"><button class="ghost" data-act="exp">שמירת גיבוי לקובץ</button><label class="ghost" style="color:var(--mute)">ייבוא נתונים מקובץ גיבוי<input type="file" id="impf" accept=".json,application/json" hidden></label><div id="impq"></div><button class="ghost danger" data-act="logout">יציאה מהחשבון</button><button class="btn" data-act="acctClose">סגירה</button></div></div></div>
+<nav>
+<button data-act="tab" data-id="lessons">שיעורים</button>
+<button data-act="tab" data-id="cal">יומן</button>
+<button data-act="tab" data-id="remind">תזכורות</button>
+<button data-act="tab" data-id="pay">תשלומים</button>
+</nav>
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+let S={bookings:[],lessons:[]},tab='lessons',adding=false,editId=null,calD=null,calV='month',calSel=null,calMenu=null,confirmId=null,docRef=null,timer,view=(()=>{try{return localStorage.getItem('ski-view')||'cards'}catch(e){return 'cards'}})();
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const esc=t=>String(t==null?'':t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const today=()=>new Date().toLocaleDateString('sv-SE');
+const addD=(d,n)=>{const x=new Date(d+'T00:00');x.setDate(x.getDate()+n);return x.toLocaleDateString('sv-SE')};
+const fmtD=d=>new Date(d+'T00:00').toLocaleDateString('he-IL',{weekday:'long',day:'numeric',month:'long'});
+const fmtS=d=>new Date(d+'T00:00').toLocaleDateString('he-IL',{weekday:'short',day:'numeric',month:'numeric'});
+const money=(n,c)=>(c||'€')+(+n||0).toLocaleString('he-IL');
+const first=n=>(n||'').trim().split(/\s+/)[0];
+const hh=t=>t.endsWith(':00')?String(+t.slice(0,2)):t;
+const dh=h=>h===1?'שעה':h===2?'שעתיים':h+' שעות';
+const mins=t=>{const[h,m]=t.split(':').map(Number);return h*60+m};
+const autoDur=(s,e)=>{let h=(mins(e)-mins(s))/60;if(h>=5)h-=1;return Math.min(6,Math.max(1,Math.round(h)))};
+const cmp=(a,b)=>(a.date+a.start).localeCompare(b.date+b.start);
+const bOf=l=>S.bookings.find(b=>b.id===l.bid)||{};
+const setStatus=t=>{const o=$('#toast');o.textContent=t;o.className='show';clearTimeout(setStatus.t);setStatus.t=setTimeout(()=>{o.className=''},2200)};
+const err=m=>{const e=$('#err');if(e)e.textContent=m};
+const DEP=['ממתין','שולם','הועבר לשירה לב'];
+const mig=()=>{S.bookings.forEach(b=>{if(b.depSt==='שילם')b.depSt='שולם';else if(b.depSt==='לא שילם')b.depSt='ממתין'});S.bookings=S.bookings.filter(b=>S.lessons.some(l=>l.bid===b.id))};
+const icoCal='<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3" fill="#fff" stroke="#4285F4" stroke-width="1.6"/><path d="M3 6a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3v3H3z" fill="#4285F4"/><text x="12" y="19" text-anchor="middle" font-size="9" font-weight="700" fill="#4285F4" font-family="Arial,sans-serif">31</text></svg>';
+const icoWa='<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#25D366"/><path fill="#fff" d="M7.5 6.5c.6-.6 1.3-.5 1.6.2l.8 1.8c.2.5 0 .9-.3 1.3l-.5.6c.8 1.6 1.8 2.6 3.4 3.4l.6-.5c.4-.3.9-.5 1.4-.3l1.7.8c.7.3.8 1 .2 1.6-.9 1-2 1.3-3.3.8-3-1.1-5.2-3.3-6.3-6.3-.5-1.3-.2-2.4.7-3.4z"/></svg>';
+const icoDel='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 3h4M6 7l1 13h10l1-13M10 11v6M14 11v6"/></svg>';
+
+// ---- Supabase (sync + login). The anon key is public by design; Row Level Security keeps each user's data private.
+const SB_URL='https://ozlagfemqjtcdlbowaje.supabase.co',SB_KEY='sb_publishable_GAh3ymZorb4lxMFwK-iMeA_NxHSzdm3';
+const sb=(window.supabase&&!SB_URL.startsWith('__'))?supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}}):null;
+let user=null,authReady=!sb,authMode='in',authEmail='',authMsg='',recovery=false,impData=null;
+const LK=()=>'ski-diary-v2:'+(user?user.id:'local');
+const keepLocal=()=>{try{localStorage.setItem(LK(),JSON.stringify(S))}catch(e){}};
+
+let dirty=false,saving=false;
+function save(){
+ S.ts=Date.now();
+ keepLocal();
+ dirty=true;
+ if(user)flush();else setStatus('נשמר במכשיר הזה בלבד');
+}
+async function flush(){
+ if(saving||!dirty||!user)return;
+ saving=true;dirty=false;
+ let ok=false;try{const{error}=await sb.from('diaries').upsert({user_id:user.id,data:S,ts:S.ts||0});ok=!error}catch(e){}
+ saving=false;
+ if(ok){setStatus('✓ נשמר');if(dirty)flush()}
+ else{dirty=true;setStatus('השמירה נכשלה, מנסה שוב…');setTimeout(flush,3000)}
+}
+// Merge by ts: the newer copy (this device or the cloud) wins. Returns true if S was replaced by the cloud copy.
+async function pull(){
+ const{data,error}=await sb.from('diaries').select('data').eq('user_id',user.id).maybeSingle();
+ if(error)throw error;
+ const d=data&&data.data;
+ if(d&&d.bookings){
+  if((d.ts||0)>(S.ts||0)){S=d;mig();keepLocal();return true}
+  if((S.ts||0)>(d.ts||0))dirty=true;
+ }else if(S.lessons.length||S.bookings.length)dirty=true;
+ return false;
+}
+// Daily backup copy in its own table, one per day, kept forever.
+async function backup(){
+ try{
+  if(!S.bookings.length)return;
+  const t=today(),{data:have}=await sb.from('diary_backups').select('day').eq('user_id',user.id).eq('day',t);
+  if(have&&have.length)return;
+  await sb.from('diary_backups').insert({user_id:user.id,day:t,data:S});
+ }catch(e){}
+}
+async function start(u){
+ user=u;S={bookings:[],lessons:[]};dirty=false;
+ try{const c=localStorage.getItem(LK());if(c)S=JSON.parse(c)}catch(e){}
+ if(!S.bookings)S={bookings:[],lessons:[]};
+ mig();tab='lessons';adding=false;editId=null;calD=null;calSel=null;confirmId=null;
+ render();
+ try{await pull();setStatus('✓ נשמר');if(dirty)flush();backup()}catch(e){setStatus('אין חיבור, נשמר במכשיר הזה')}
+ if(!adding&&!editId&&!recovery)render();
+}
+document.addEventListener('visibilitychange',()=>{
+ if(document.visibilityState==='hidden'){dirty=true;flush()}
+ else if(user&&!recovery&&!dirty&&!saving)pull().then(ch=>{if(dirty)flush();if(ch&&!adding&&!editId)render()}).catch(()=>{});
+});
+addEventListener('pagehide',()=>{dirty=true;flush()});
+
+// ---- Login screen
+function vAuth(){
+ if(!sb)return '<div class="card" style="margin-top:16px"><div class="nm">האפליקציה עוד לא מחוברת לשמירה בענן.</div></div>';
+ if(recovery)return `<form class="card" id="authf" style="margin-top:16px"><div class="nm">סיסמה חדשה</div><label for="a-pass">סיסמה חדשה (6 תווים לפחות)</label><input id="a-pass" type="password" autocomplete="new-password" dir="ltr"><div id="err"></div><div class="acts"><button class="btn full" type="submit">שמירת הסיסמה</button></div></form>`;
+ const m=authMode,T={in:['כניסה','כניסה'],up:['משתמש חדש','יצירת משתמש'],forgot:['איפוס סיסמה','שליחת קישור לאיפוס']}[m];
+ return `<form class="card" id="authf" style="margin-top:16px"><div class="nm">${T[0]}</div>
+<label for="a-email">אימייל</label><input id="a-email" type="email" inputmode="email" autocomplete="username" dir="ltr" value="${esc(authEmail)}">
+${m!=='forgot'?`<label for="a-pass">סיסמה${m==='up'?' (6 תווים לפחות)':''}</label><input id="a-pass" type="password" autocomplete="${m==='up'?'new-password':'current-password'}" dir="ltr">`:''}
+<div id="err"></div>${authMsg?`<div class="okmsg">${esc(authMsg)}</div>`:''}
+<div class="acts"><button class="btn full" type="submit" id="authbtn">${T[1]}</button></div>
+<div class="acts" style="justify-content:space-between">${m==='in'?'<button type="button" class="linkb" data-act="authMode" data-id="up">משתמש חדש? הרשמה</button><button type="button" class="linkb" data-act="authMode" data-id="forgot">שכחת סיסמה?</button>':'<button type="button" class="linkb" data-act="authMode" data-id="in">יש לך כבר משתמש? כניסה</button>'}</div></form>`;
+}
+const keepEmail=()=>{const e=$('#a-email');if(e)authEmail=e.value.trim()};
+async function authGo(){
+ keepEmail();authMsg='';
+ const em=authEmail,pw=($('#a-pass')||{}).value||'',btn=$('#authf [type=submit]');
+ if(!recovery&&!em){err('חסר אימייל');return}
+ if((recovery||authMode==='up')&&pw.length<6){err('הסיסמה צריכה להיות 6 תווים לפחות');return}
+ if(authMode==='in'&&!recovery&&!pw){err('חסרה סיסמה');return}
+ if(btn)btn.disabled=true;err('');
+ const back=location.origin+location.pathname;
+ try{
+  if(recovery){const{error}=await sb.auth.updateUser({password:pw});if(error)throw error;recovery=false;history.replaceState(null,'',location.pathname);start(user);return}
+  if(authMode==='in'){const{error}=await sb.auth.signInWithPassword({email:em,password:pw});if(error)throw error;return}
+  if(authMode==='up'){const{data,error}=await sb.auth.signUp({email:em,password:pw,options:{emailRedirectTo:back}});if(error)throw error;if(!data.session){authMode='in';authMsg='נשלח אליך מייל לאישור. אחרי האישור אפשר להיכנס.';render()}return}
+  const{error}=await sb.auth.resetPasswordForEmail(em,{redirectTo:back});if(error)throw error;
+  authMode='in';authMsg='נשלח מייל עם קישור לאיפוס הסיסמה.';render();
+ }catch(e){
+  const m=String(e&&e.message||'');
+  err(/invalid login/i.test(m)?'אימייל או סיסמה לא נכונים':/already registered/i.test(m)?'כבר יש משתמש עם האימייל הזה. אפשר להיכנס.':/not confirmed/i.test(m)?'צריך קודם לאשר את המייל ששלחנו.':/rate limit|seconds/i.test(m)?'יותר מדי ניסיונות. נסה שוב בעוד כמה דקות.':/fetch|network/i.test(m)?'אין חיבור לאינטרנט.':'משהו השתבש, נסה שוב.');
+  if(btn)btn.disabled=false;
+ }
+}
+document.addEventListener('submit',e=>{if(e.target.id==='authf'){e.preventDefault();authGo()}});
+
+// ---- Account window: backup file, import, sign out
+function openAcct(){$('#acctmail').textContent=user?user.email:'';$('#impq').innerHTML='';impData=null;$('#acctm').hidden=false}
+function exportFile(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(S,null,1)],{type:'application/json'}));a.download='ski-diary-backup-'+today()+'.json';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000)}
+function readImp(f){
+ if(!f)return;const r=new FileReader();
+ r.onload=()=>{try{const d=JSON.parse(r.result);if(!Array.isArray(d.bookings)||!Array.isArray(d.lessons))throw 0;impData=d;$('#impq').innerHTML=`<div class="sub">בקובץ ${d.bookings.length} הזמנות ו-${d.lessons.length} שיעורים. להחליף בהם את הנתונים שיש כאן עכשיו?</div><div class="acts"><button class="btn" data-act="impYes">כן, להחליף</button><button class="ghost" data-act="impNo">ביטול</button></div>`}catch(e){$('#impq').innerHTML='<div class="sub" style="color:var(--danger)">זה לא קובץ גיבוי של היומן.</div>'}$('#impf').value=''};
+ r.readAsText(f);
+}
+async function logout(){
+ if(dirty){try{await sb.from('diaries').upsert({user_id:user.id,data:S,ts:S.ts||0});dirty=false}catch(e){}}
+ await sb.auth.signOut().catch(()=>{});
+ user=null;S={bookings:[],lessons:[]};$('#acctm').hidden=true;authMode='in';authMsg='';render();
+}
+const agesTxt=b=>{const a=(b.ages||[]).filter(Boolean),n=b.n||a.length||1;return [n>1?n+' תלמידים':'',a.length?(a.length>1?'גילאים ':'גיל ')+a.join(', '):''].filter(Boolean).join(', ')};
+const dayUrl=l=>{const[y,m,d]=l.date.split('-').map(Number);return 'https://calendar.google.com/calendar/r/day/'+y+'/'+m+'/'+d};
+const depTxt=b=>b.dep?money(b.dep,b.cur)+' ('+b.depSt+')':'ללא';
+const calDesc=b=>{const a=(b.ages||[]).filter(Boolean),n=b.n||a.length||1;return ['מספר גולשים: '+n,a.length?'גילאים: '+a.join(', '):'',b.exp?'ניסיון: '+b.exp:'','מחיר: '+money(b.total,b.cur),'מקדמה: '+depTxt(b),'נשאר לתשלום במזומן: '+money(remOf(b),b.cur),b.phone?'טלפון: '+b.phone:'',b.note?'הערות: '+b.note:''].filter(Boolean).join('\n')};
+const calUrl=l=>{const b=bOf(l),z=(d,t)=>{const[y,mo,da]=d.split('-').map(Number),[h,mi]=t.split(':').map(Number);return new Date(Date.UTC(y,mo-1,da,h-4,mi)).toISOString().replace(/[-:]|\.\d{3}/g,'')};return 'https://calendar.google.com/calendar/render?action=TEMPLATE&text='+encodeURIComponent(b.name)+'&dates='+z(l.date,l.start)+'/'+z(l.date,l.end)+'&location='+encodeURIComponent('Gudauri, Georgia')+'&details='+encodeURIComponent(calDesc(b))};
+const waNum=b=>{let p=(b.phone||'').replace(/\D/g,'').replace(/^00/,'');if(p.startsWith('0'))p='972'+p.slice(1);return p};
+const waUrl=l=>{const b=bOf(l),p=waNum(b);const m='היי '+first(b.name)+', תזכורת לשיעור סקי ב'+fmtD(l.date)+' בשעה '+l.start+'. נתראה!';return waLink(p,m)};
+const icoOk='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+const waLink=(p,m)=>'https://wa.me/'+p+(m?'?text='+encodeURIComponent(m):'');
+const act=(l,c)=>{const p=waNum(bOf(l));return `<a class="ibtn" data-act="cal" data-id="${l.id}" href="${l.cal?dayUrl(l):calUrl(l)}" target="_blank" rel="noopener" title="${l.cal?'פתיחה ב-Google Calendar':'הוספה ל-Google Calendar'}" aria-label="${l.cal?'פתיחה ב-Google Calendar':'הוספה ל-Google Calendar'}">${l.cal?'<span class="chk">'+icoOk+'</span>':''}${icoCal}${c?'':' יומן'}</a>${p?`<a class="ibtn" href="${waLink(p,'')}" target="_blank" rel="noopener" title="וואטסאפ" aria-label="וואטסאפ">${icoWa}${c?'':' וואטסאפ'}</a>`:''}`};
+const icoEdit='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg>';
+const edt=id=>`<button class="trash edit" data-act="edit" data-id="${id}" aria-label="עריכה">${icoEdit}</button>`;
+const del=(id,a)=>`<button class="trash${confirmId===id?' on':''}" data-act="${a}" data-id="${id}" aria-label="מחיקה">${confirmId===id?'למחוק?':icoDel}</button>`;
+
+const card=l=>{const b=bOf(l),x=[agesTxt(b),b.exp,b.note].filter(Boolean).join(', ');return `<div class="card lesson"><div class="when"><b>${l.start}</b><span>עד ${l.end}</span><span>${dh(l.dur)}</span></div><div class="info"><div class="nm">${esc(b.name)}</div>${x?`<div class="sub">${esc(x)}</div>`:''}<div class="acts">${act(l)}</div></div>${edt(l.bid)}${del(l.id,'del')}</div>`};
+const row=l=>{const b=bOf(l);return `<tr><td>${fmtS(l.date)}</td><td>${l.start}–${l.end}</td><td>${dh(l.dur)}</td><td>${esc(b.name)}</td><td>${esc((b.ages||[]).filter(Boolean).join(', '))}</td><td>${esc(b.exp||'')}</td><td class="tact">${act(l,1)}${edt(l.bid)}${del(l.id,'del')}</td><td>${esc(b.note||'')}</td></tr>`};
+const table=a=>`<div class="tw"><table><thead><tr><th>תאריך</th><th>שעות</th><th>משך</th><th>מזמין</th><th>גיל</th><th>ניסיון</th><th></th><th>הערות</th></tr></thead><tbody>${a.map(row).join('')}</tbody></table></div>`;
+
+const sessRow=i=>`<div class="card sess"><b class="sl">שיעור ${i}</b>${i>1?'<button class="ghost danger" style="float:inline-end" data-act="rmSess">הסרה</button>':''}<div class="row"><div><label>תאריך</label><input type="date" class="s-date" value="${today()}"></div><div><label>משך (שעות)</label><select class="s-dur">${[1,2,3,4,5,6].map(h=>`<option value="${h}"${h===2?' selected':''}>${h}</option>`).join('')}</select></div></div><div class="row"><div><label>שעת התחלה</label><input type="time" class="s-st" value="09:00"></div><div><label>שעת סיום</label><input type="time" class="s-en" value="11:00"></div></div></div>`;
+const ageHtml=(n,v=[])=>Array.from({length:n},(_,i)=>`<div><label>גיל תלמיד${n>1?' '+(i+1):''}</label><input type="number" inputmode="numeric" min="1" class="f-age" value="${v[i]||''}"></div>`).join('');
+function bookingForm(){return `<div class="card">${sampleFn?`<div class="autofill"><label for="f-auto" style="margin-top:0">מילוי אוטומטי</label><textarea id="f-auto" rows="4" placeholder="הדבק כאן הודעה עם פרטי ההזמנה"></textarea><div class="acts"><button class="btn" id="autobtn" data-act="autoFill">העתק פרטים</button><span class="sub" id="autonote"></span></div></div>`:''}<label for="f-name">שם המזמין</label><input id="f-name" autocomplete="off">
+<label for="f-phone">מספר טלפון</label><input id="f-phone" type="tel" inputmode="tel">
+<div class="row"><div><label for="f-n">מספר תלמידים</label><select id="f-n">${[1,2,3,4].map(n=>`<option>${n}</option>`).join('')}</select></div><div><label for="f-exp">ניסיון</label><input id="f-exp" placeholder="למשל: יש ניסיון"></div></div>
+<div class="ages" id="ages">${ageHtml(1)}</div>
+<h3>שיעורים</h3><div id="sess">${sessRow(1)}</div><div class="acts"><button class="ghost" data-act="addSess">+ הוספת שיעור נוסף להזמנה</button></div>
+<h3>תשלום</h3>
+<div class="row"><div><label for="f-total">סכום שסוכם</label><input id="f-total" type="number" inputmode="numeric" min="0"></div><div><label for="f-cur">מטבע</label><select id="f-cur"><option value="€">יורו €</option><option value="₪">שקל ₪</option></select></div></div>
+<div class="row"><div><label for="f-dep">סכום מקדמה (10% אוטומטי)</label><input id="f-dep" type="number" inputmode="numeric" min="0"></div><div><label for="f-depst">מקדמה</label><select id="f-depst">${DEP.map(o=>`<option>${o}</option>`).join('')}</select></div></div>
+<div class="cashline">נשאר לתשלום במזומן: <b id="f-cash">€0</b></div>
+<label for="f-note">הערות</label><textarea id="f-note" rows="3"></textarea>
+<div id="err"></div><div class="acts"><button class="btn" data-act="saveB">שמירת הזמנה</button><button class="ghost" data-act="cancel">ביטול</button></div></div>`}
+
+const detail=l=>{const b=bOf(l),x=[agesTxt(b),b.exp].filter(Boolean).join(', ');return `<div class="det"><div>${l.start}–${l.end}, ${dh(l.dur)}</div>${x?`<div class="sub">${esc(x)}</div>`:''}${b.note?`<div class="sub">${esc(b.note)}</div>`:''}${b.phone?`<div class="sub" dir="ltr">${esc(b.phone)}</div>`:''}<div class="acts">${act(l)}${edt(l.bid)}${del(l.id,'del')}</div></div>`};
+const ent=l=>`<details class="ent"><summary><b>${esc(bOf(l).name)}</b><span>${l.start}–${l.end}</span></summary>${detail(l)}</details>`;
+const tl=(days,hp)=>{
+ const L=S.lessons.filter(l=>days.includes(l.date)),wk=days.length>1,hd=wk?32:10;
+ let h0=10,h1=17;L.forEach(l=>{h0=Math.min(h0,Math.floor(mins(l.start)/60));h1=Math.max(h1,Math.ceil(mins(l.end)/60))});
+ const H=(h1-h0)*hp;
+ const axis=Array.from({length:h1-h0+1},(_,i)=>`<span class="hl" style="top:${i*hp-7}px">${String(h0+i).padStart(2,'0')}:00</span>`).join('');
+ const cols=days.map(d=>{
+  const bl=L.filter(l=>l.date===d).map(l=>{const t=(mins(l.start)-h0*60)/60*hp,ht=Math.max(18,(mins(l.end)-mins(l.start))/60*hp-2);return `<button class="blk${calSel===l.id?' on':''}" data-act="calPick" data-id="${l.id}" style="top:${t}px;height:${ht}px"><b>${esc(bOf(l).name)}</b>${wk?'':`<span>${l.start}–${l.end}</span>`}</button>`}).join('');
+  return `<div><div class="thd${d===today()?' tod':''}" style="height:${hd}px">${wk?`<button class="ghost" data-act="calGo" data-id="${d}">${new Date(d+'T00:00').toLocaleDateString('he-IL',{weekday:'short'})} ${+d.slice(8)}</button>`:''}</div><div class="tbody" style="height:${H}px;--hp:${hp}px">${bl}</div></div>`}).join('');
+ return `<div class="tl${wk?'':' day'}" style="grid-template-columns:40px repeat(${days.length},minmax(0,1fr))"><div><div style="height:${hd}px"></div><div class="axis" style="height:${H}px">${axis}</div></div>${cols}</div>`};
+function vCal(){
+ if(!calD){const n=S.lessons.filter(l=>l.date>=today()).sort(cmp)[0];calD=n?n.date:today()}
+ const on=d=>S.lessons.filter(l=>l.date===d).sort(cmp),[y,m]=calD.split('-').map(Number),f=new Date(y,m-1,1);
+ let title,body;
+ if(calV==='month'){
+  const k=calD.slice(0,7),days=new Date(y,m,0).getDate(),by={};
+  S.lessons.filter(l=>l.date.startsWith(k)).sort(cmp).forEach(l=>(by[l.date]=by[l.date]||[]).push(l));
+  let g=['א','ב','ג','ד','ה','ו','ש'].map(d=>`<div class="dow">${d}</div>`).join('')+'<div></div>'.repeat(f.getDay());
+  for(let d=1;d<=days;d++){const ds=k+'-'+String(d).padStart(2,'0'),L=by[ds]||[];g+=`<button class="day${ds===today()?' tod':''}${ds===calD?' sel':''}" data-act="calDay" data-id="${ds}"><span class="dn">${d}</span>${L.slice(0,3).map(l=>`<span class="chip">${esc(bOf(l).name)}</span>`).join('')}${L.length>3?`<span class="more">+${L.length-3}</span>`:''}</button>`}
+  title=f.toLocaleDateString('he-IL',{month:'long',year:'numeric'});
+  const sel=calSel&&S.lessons.find(l=>l.id===calSel);
+  body=`<div class="calgrid">${g}</div><h2>${fmtD(calD)}</h2>`+tl([calD],60)+(sel?`<div class="card" style="margin-top:12px"><div class="nm">${esc(bOf(sel).name)}</div>${detail(sel)}</div>`:'<div class="nolsn" style="margin-top:8px">לחץ על שיעור כדי לראות פרטים.</div>');
+ }else{
+  const wk=calV==='week',s0=wk?addD(calD,-new Date(calD+'T00:00').getDay()):calD,days=wk?Array.from({length:7},(_,i)=>addD(s0,i)):[calD];
+  title=wk?fmtS(s0)+' – '+fmtS(addD(s0,6)):(calD===today()?'היום':fmtD(calD));
+  const sel=calSel&&S.lessons.find(l=>l.id===calSel);
+  body=tl(days,wk?44:60)+(sel?`<div class="card" style="margin-top:12px"><div class="nm">${esc(bOf(sel).name)}</div>${detail(sel)}</div>`:'<div class="nolsn" style="margin-top:8px">לחץ על שיעור כדי לראות פרטים.</div>');
+ }
+ const seg=[['month','לוח שנה'],['week','לוז שבועי'],['day','לוז יומי']].map(([k,t])=>`<button data-act="calV" data-id="${k}" aria-pressed="${calV===k}">${t}</button>`).join('');
+ return `<div class="seg">${seg}</div><div class="calhd"><button class="ghost" data-act="calNav" data-id="-1" aria-label="הקודם">→</button><b>${title}</b><button class="ghost" data-act="calNav" data-id="1" aria-label="הבא">←</button></div><div class="acts" style="justify-content:center"><button class="ghost" data-act="calToday">היום</button></div>${body}`;
+}
+function vLessons(){
+ const t=today(),up=S.lessons.filter(l=>l.date>=t).sort(cmp),past=S.lessons.filter(l=>l.date<t).sort((a,b)=>cmp(b,a));
+ let h=(adding||editId)?bookingForm():`<button class="btn full" data-act="addB" style="margin-top:12px">הוספת הזמנה</button>`;
+ if(!up.length&&!adding)h+=`<div class="empty">אין שיעורים קרובים.<br>הוסף את ההזמנה הראשונה ליומן.</div>`;
+ if(up.length||past.length)h+=`<div class="seg"><button data-act="view" data-id="cards" aria-pressed="${view==='cards'}">רשימה</button><button data-act="view" data-id="table" aria-pressed="${view==='table'}">טבלה</button></div>`;
+ if(view==='table'){if(up.length)h+=table(up);if(past.length)h+=`<details><summary>שיעורים שהיו (${past.length})</summary>${table(past)}</details>`;return h}
+ let cur='';
+ up.forEach(l=>{if(l.date!==cur){cur=l.date;h+=`<h2>${l.date===t?'היום':fmtD(l.date)}</h2>`}h+=card(l)});
+ if(past.length)h+=`<details><summary>שיעורים שהיו (${past.length})</summary>${past.map(l=>`<h2>${fmtD(l.date)}</h2>`+card(l)).join('')}</details>`;
+ return h;
+}
+
+const nextOf=id=>S.lessons.filter(l=>l.bid===id&&l.date>=today()).sort(cmp)[0];
+const remList=()=>S.bookings.map(b=>({b,l:nextOf(b.id)})).filter(x=>x.l&&x.l.date<=addD(today(),7)).sort((a,c)=>cmp(a.l,c.l));
+const remCard=(b,l,top)=>{const p=waNum(b),when=`${l.date===today()?'היום':fmtD(l.date)}, ${l.start}–${l.end}`;
+ const btn=!p?`<button class="ghost" style="font-size:.78rem;padding:4px 10px" data-act="edit" data-id="${b.id}">הוסף מספר טלפון כדי לשלוח תזכורת</button>`
+  :(b.rem?'<span class="pill">✓ תזכורת נשלחה</span>':`<a class="${top?'btn':'ibtn'}" data-act="remind" data-id="${b.id}" href="${waUrl(l)}" target="_blank" rel="noopener">${icoWa} שלח תזכורת</a>`)+`<a class="ibtn" href="${waLink(p,'')}" target="_blank" rel="noopener" title="צ׳אט בוואטסאפ" aria-label="צ׳אט בוואטסאפ">${icoWa} צ׳אט</a>`;
+ return `<div class="card"><div class="nm">${esc(b.name)}</div><div class="sub">${when}</div><div class="acts">${btn}</div></div>`};
+function vRemind(){
+ const t=today(),all=S.lessons.filter(l=>l.date>=t).sort(cmp),lim=addD(t,2),due=remList().filter(x=>!x.b.rem&&x.l.date<=lim);
+ let h='<h2>תזכורות לשלוח, יומיים לפני השיעור</h2>';
+ h+=due.length?due.map(({b,l})=>remCard(b,l,true)).join(''):'<div class="nolsn">אין תזכורות לשלוח כרגע.</div>';
+ h+='<h2>כל השיעורים</h2>';
+ h+=all.length?all.map(l=>remCard(bOf(l),l,false)).join(''):'<div class="empty">אין שיעורים קרובים.</div>';
+ return h;
+}
+const paidOf=b=>(b.depSt!=='ממתין'?+b.dep||0:0)+(+b.paid||0);
+const recOf=b=>(b.depSt==='שולם'?+b.dep||0:0)+(+b.paid||0);
+const remOf=b=>Math.max(0,(+b.total||0)-paidOf(b));
+const sumBy=f=>{const o={};S.bookings.forEach(b=>{const v=f(b);if(v)o[b.cur]=(o[b.cur]||0)+v});const k=Object.entries(o);return k.length?k.map(([c,v])=>money(v,c)).join(' + '):money(0)};
+function vPay(){
+ let h=`<div class="sum"><div class="card"><small>התקבל</small><b>${sumBy(recOf)}</b></div><div class="card due"><small>ממתין לתשלום</small><b>${sumBy(remOf)}</b></div></div>`;
+ if(!S.bookings.length)return h+'<div class="empty">אין הזמנות עדיין.</div>';
+ S.bookings.forEach(b=>{const r=remOf(b),f=(k,v)=>`data-f="${k}" data-id="${b.id}" value="${v||''}"`;
+  h+=`<div class="card"><div class="nm">${esc(b.name)}</div>
+<div class="row"><label>סכום שסוכם (${b.cur})<input type="number" inputmode="numeric" ${f('total',b.total)}></label><label>מקדמה (${b.cur})<input type="number" inputmode="numeric" ${f('dep',b.dep)}></label></div>
+<label>מקדמה<select data-f="depSt" data-id="${b.id}">${DEP.map(o=>`<option${o===b.depSt?' selected':''}>${o}</option>`).join('')}</select></label>
+<label>שולם על השיעורים (${b.cur})<input type="number" inputmode="numeric" ${f('paid',b.paid||0)}></label>
+<div class="remain">נשאר לתשלום במזומן: <b style="color:${r?'var(--accent)':'var(--ok)'}">${r?money(r,b.cur):'שולם במלואו'}</b></div>${edt(b.id)}${del(b.id,'delB')}</div>`});
+ return h;
+}
+
+function render(){
+ const out=!user||recovery;
+ document.body.classList.toggle('noauth',out);$('#acct').hidden=out;
+ if(!authReady){$('#main').innerHTML='';return}
+ if(out){$('#main').innerHTML=vAuth();return}
+ $('#main').innerHTML=tab==='lessons'?vLessons():tab==='cal'?vCal():tab==='remind'?vRemind():vPay();
+ if(editId&&tab==='lessons'){const eb=S.bookings.find(x=>x.id===editId);if(eb)fillForm(eb)}
+ $$('nav button').forEach(b=>b.setAttribute('aria-current',b.dataset.id===tab));
+ const n=remList().filter(x=>!x.b.rem&&x.l.date<=addD(today(),2)).length;
+ $('nav [data-id=remind]').textContent=n?'תזכורות ('+n+')':'תזכורות';
+}
+function addSess(){
+ const box=$('#sess'),rows=box.querySelectorAll('.sess'),last=rows[rows.length-1];
+ box.insertAdjacentHTML('beforeend',sessRow(rows.length+1));
+ const n=box.lastElementChild;n.querySelector('.s-date').value=addD(last.querySelector('.s-date').value,1);
+ ['s-st','s-en','s-dur'].forEach(c=>n.querySelector('.'+c).value=last.querySelector('.'+c).value);
+}
+const cash=()=>{const o=$('#f-cash');if(!o)return;const t=+$('#f-total').value||0,d=+$('#f-dep').value||0;o.textContent=money(Math.max(0,t-($('#f-depst').value!=='ממתין'?d:0)),$('#f-cur').value)};
+function fillForm(b){
+ $('#f-name').closest('.card').insertAdjacentHTML('afterbegin','<div class="nm">עריכת הזמנה</div>');
+ $('#f-name').value=b.name;$('#f-phone').value=b.phone||'';
+ $('#f-n').value=b.n||1;$('#ages').innerHTML=ageHtml(+$('#f-n').value,b.ages||[]);
+ $('#f-exp').value=b.exp||'';$('#f-note').value=b.note||'';
+ $('#f-total').value=b.total||'';$('#f-cur').value=b.cur;$('#f-dep').value=b.dep||'';$('#f-depst').value=b.depSt;$('#f-dep').dataset.manual='1';
+ const L=S.lessons.filter(l=>l.bid===b.id).sort(cmp);
+ if(L.length){$('#sess').innerHTML=L.map((l,i)=>sessRow(i+1)).join('');$$('#sess .sess').forEach((r,i)=>{const l=L[i];r.dataset.id=l.id;r.querySelector('.s-date').value=l.date;r.querySelector('.s-st').value=l.start;r.querySelector('.s-en').value=l.end;r.querySelector('.s-dur').value=l.dur})}
+ $('[data-act=saveB]').textContent='שמירת שינויים';cash();
+}
+function saveBooking(){
+ const name=$('#f-name').value.trim();if(!name){err('הכנס שם המזמין');return false}
+ const rows=$$('#sess .sess').map(r=>({id:r.dataset.id||'',date:r.querySelector('.s-date').value,start:r.querySelector('.s-st').value,end:r.querySelector('.s-en').value,dur:+r.querySelector('.s-dur').value}));
+ if(rows.some(r=>!r.date||!r.start||!r.end)){err('חסרים תאריך או שעות באחד השיעורים');return false}
+ const b={id:uid(),name,phone:$('#f-phone').value.trim(),n:+$('#f-n').value,ages:$$('.f-age').map(i=>+i.value||0),exp:$('#f-exp').value.trim(),note:$('#f-note').value.trim(),cur:$('#f-cur').value,total:+$('#f-total').value||0,dep:+$('#f-dep').value||0,depSt:$('#f-depst').value,paid:0};
+ const oc={};S.lessons.forEach(l=>{if(l.cal)oc[l.id]=l.date+l.start+l.end});
+ if(editId){const o=S.bookings.find(x=>x.id===editId);Object.assign(o,{...b,id:o.id,paid:o.paid,rem:o.rem});b.id=o.id;S.lessons=S.lessons.filter(l=>l.bid!==editId)}else S.bookings.push(b);
+ rows.forEach(r=>S.lessons.push({...r,id:r.id||uid(),bid:b.id,cal:oc[r.id]===r.date+r.start+r.end}));adding=false;editId=null;save();return true;
+}
+
+const tm=t=>{const m=String(t||'').match(/(\d{1,2})(?::?(\d{2}))?/);return m?String(m[1]).padStart(2,'0')+':'+(m[2]||'00'):''};
+async function autoFill(){
+ const txt=$('#f-auto').value.trim(),n=$('#autonote'),btn=$('#autobtn');
+ if(!txt){n.textContent='הדבק הודעה קודם';return}
+ btn.disabled=true;n.textContent='קורא את ההודעה…';
+ const prompt='אתה מחלץ פרטי הזמנה לשיעורי סקי מהודעה. החזר JSON בלבד עם המפתחות: name (שם המזמין), phone (מספר טלפון כפי שמופיע, או ""), students (מספר תלמידים, 1 עד 4), ages (מערך גילאים של התלמידים, מספרים), exp (ניסיון בקצרה, למשל "יש ניסיון" או "מתחילים", או ""), total (הסכום שסוכם, מספר או null), cur ("€" או "₪" או null), dep (סכום מקדמה, מספר או null), depSt ("שולם" אם נאמר שהמקדמה שולמה, "הועבר לשירה לב" אם נאמר שהועברה לשירה לב, אחרת "ממתין"), note (הערות נוספות שלא נכנסו לשדות אחרים, או ""), lessons (מערך של {date:"YYYY-MM-DD",start:"HH:MM",end:"HH:MM"}). התאריך של היום הוא '+today()+'. אם השנה חסרה, בחר את התאריך הקרוב הבא. שעות בפורמט 24 שעות. מה שלא מופיע בהודעה השאר "" או null. ההודעה:\n'+txt;
+ try{fillFrom(await sampleFn.json(prompt,{modelTier:'quick'}));n.textContent='מולא. בדוק את הפרטים ותקן אם צריך.'}
+ catch(e){n.textContent=e&&e.code==='not_granted'?'צריך לאשר שימוש ב-Claude כדי למלא אוטומטית.':'לא הצלחתי למלא, נסה שוב או מלא ידנית.'}
+ btn.disabled=false;
+}
+function fillFrom(d){
+ const set=(id,v)=>{const e=$(id);if(e&&v!=null&&v!=='')e.value=v};
+ set('#f-name',d.name);set('#f-phone',d.phone);set('#f-exp',d.exp);set('#f-note',d.note);
+ const ag=(d.ages||[]).map(x=>+x||''),n=Math.min(4,Math.max(1,+d.students||ag.length||1));
+ $('#f-n').value=n;$('#ages').innerHTML=ageHtml(n,ag);
+ if(d.cur==='€'||d.cur==='₪')$('#f-cur').value=d.cur;
+ const dp=$('#f-dep');
+ if(d.total!=null&&d.total!==''){$('#f-total').value=+d.total||'';if((d.dep==null||d.dep==='')&&!dp.dataset.manual)dp.value=Math.round((+d.total||0)*10)/100||''}
+ if(d.dep!=null&&d.dep!==''){dp.value=+d.dep||'';dp.dataset.manual='1'}
+ if(DEP.includes(d.depSt))$('#f-depst').value=d.depSt;
+ const L=(d.lessons||[]).map(l=>l&&({date:String(l.date||''),start:tm(l.start),end:tm(l.end)})).filter(l=>l&&/^\d{4}-\d{2}-\d{2}$/.test(l.date)&&l.start&&l.end);
+ if(L.length){$('#sess').innerHTML=L.map((l,i)=>sessRow(i+1)).join('');$$('#sess .sess').forEach((r,i)=>{const l=L[i];r.querySelector('.s-date').value=l.date;r.querySelector('.s-st').value=l.start;r.querySelector('.s-en').value=l.end;r.querySelector('.s-dur').value=autoDur(l.start,l.end)})}
+ cash();
+}
+let delAsk=null;
+function doDel(a,id){if(a==='del')S.lessons=S.lessons.filter(x=>x.id!==id);else{S.bookings=S.bookings.filter(x=>x.id!==id);S.lessons=S.lessons.filter(x=>x.bid!==id)}S.bookings=S.bookings.filter(b=>S.lessons.some(l=>l.bid===b.id));save()}
+function askUi(on,name){const o=$('#ask');o.hidden=!on;$('#askq').hidden=false;$('#askl').hidden=true;if(on)$('#asktxt').textContent='למחוק גם מהיומן שלך ב-Google Calendar'+(name?' (של '+name+')':'')+'?'}
+function showLinks(d){$('#askq').hidden=true;$('#askl').hidden=false;$('#ask').hidden=false;$('#askname').textContent=d.name;$('#asklist').innerHTML=d.ls.map(l=>{const[y,m,dd]=l.date.split('-').map(Number);return `<a class="btn full" style="margin-bottom:8px;text-align:center" href="https://calendar.google.com/calendar/r/day/${y}/${m}/${dd}" target="_blank" rel="noopener">${fmtD(l.date)}, ${l.start}–${l.end}</a>`}).join('')}
+document.addEventListener('click',e=>{
+ const b=e.target.closest('[data-act]');if(!b)return;
+ const a=b.dataset.act,id=b.dataset.id;
+ if(a==='authMode'){keepEmail();authMode=id;authMsg='';render();return}
+ if(a==='acct'){openAcct();return}
+ if(a==='acctClose'){$('#acctm').hidden=true;return}
+ if(a==='exp'){exportFile();return}
+ if(a==='logout'){logout();return}
+ if(a==='impNo'){impData=null;$('#impq').innerHTML='';return}
+ if(a==='impYes'){if(impData){S={bookings:impData.bookings,lessons:impData.lessons};mig();tab='lessons';adding=false;editId=null;calD=null;save();impData=null;$('#impq').innerHTML='<div class="okmsg">✓ הנתונים יובאו</div>';render()}return}
+ if(a==='tab'){tab=id;adding=false;editId=null;confirmId=null;calMenu=null}
+ else if(a==='edit'){editId=id;tab='lessons';adding=false;confirmId=null;window.scrollTo(0,0)}
+ else if(a==='addB'){adding=true;editId=null}
+ else if(a==='cancel'){adding=false;editId=null}
+ else if(a==='calDay'){calD=id;calSel=null}
+ else if(a==='calV'){calV=id;calSel=null}
+ else if(a==='calPick')calSel=calSel===id?null:id;
+ else if(a==='calGo'){calD=id;calV='day';calSel=null}
+ else if(a==='calNav'){calSel=null;const[y,m]=calD.split('-').map(Number);if(calV==='month'){const x=new Date(y,m-1+(+id),1),k=x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0'),fl=S.lessons.filter(l=>l.date.startsWith(k)).sort(cmp)[0];calD=fl?fl.date:k+'-01'}else calD=addD(calD,(+id)*(calV==='week'?7:1))}
+ else if(a==='calToday'){calD=today();calSel=null}
+ else if(a==='view'){view=id;try{localStorage.setItem('ski-view',id)}catch(e){}}
+ else if(a==='cal'){const x=S.lessons.find(y=>y.id===id);if(x&&!x.cal){x.cal=true;save()}calMenu=null;setTimeout(render,400);return}
+ else if(a==='remind'){const x=S.bookings.find(y=>y.id===id);if(x){x.rem=true;save()}setTimeout(render,400);return}
+ else if(a==='autoFill'){autoFill();return}
+ else if(a==='addSess'){addSess();return}
+ else if(a==='rmSess'){b.closest('.sess').remove();$$('#sess .sl').forEach((x,j)=>x.textContent='שיעור '+(j+1));return}
+ else if(a==='del'||a==='delB'){
+  if(confirmId!==id)confirmId=id;
+  else{confirmId=null;const ids=a==='del'?[id]:S.lessons.filter(x=>x.bid===id).map(x=>x.id),cl=S.lessons.filter(x=>ids.includes(x.id)&&x.cal);
+   if(cl.length){const bk=a==='del'?bOf(cl[0]):(S.bookings.find(x=>x.id===id)||{});delAsk={a,id,name:bk.name||'',ls:cl.slice().sort(cmp).map(x=>({date:x.date,start:x.start,end:x.end}))};askUi(true,bk.name||'')}
+   else doDel(a,id)}
+ }
+ else if(a==='askYes'||a==='askNo'||a==='askCancel'||a==='askDone'){const d=delAsk;delAsk=null;askUi(false);if(d&&(a==='askYes'||a==='askNo')){doDel(d.a,d.id);if(a==='askYes')showLinks(d)}}
+ else if(a==='saveB'){if(!saveBooking())return}
+ render();
+});
+document.addEventListener('change',e=>{
+ const t=e.target;
+ if(t.id==='impf'){readImp(t.files[0]);return}
+ if(t.id==='f-n'){$('#ages').innerHTML=ageHtml(+t.value,$$('.f-age').map(i=>i.value))}
+ else if(t.classList.contains('s-st')||t.classList.contains('s-en')){const r=t.closest('.sess'),s=r.querySelector('.s-st').value,en=r.querySelector('.s-en').value;if(s&&en)r.querySelector('.s-dur').value=autoDur(s,en)}
+ else if(t.dataset.f){const b=S.bookings.find(x=>x.id===t.dataset.id);if(b){b[t.dataset.f]=t.tagName==='SELECT'?t.value:(+t.value||0);save();render()}}
+ cash();
+});
+document.addEventListener('input',e=>{const t=e.target;if(t.id==='f-dep')t.dataset.manual='1';else if(t.id==='f-total'){const d=$('#f-dep');if(d&&!d.dataset.manual)d.value=Math.round((+t.value||0)*10)/100||''}cash()});
+
+// Auto-fill is hidden for now (it needs a server-side Anthropic API call). While sampleFn is null the box doesn't show.
+let sampleFn=null;
+render();
+if(sb)sb.auth.onAuthStateChange((ev,session)=>{
+ const u=session&&session.user;
+ // Supabase advises not to call other Supabase methods inside this callback, hence setTimeout.
+ setTimeout(()=>{
+  authReady=true;
+  if(ev==='PASSWORD_RECOVERY'){recovery=true;user=u;render();return}
+  if(u&&(!user||user.id!==u.id))start(u);
+  else if(!u&&user){user=null;S={bookings:[],lessons:[]};render()}
+  else if(!u)render();
+ },0);
+});
+if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+</script>
+</body>
+</html>
