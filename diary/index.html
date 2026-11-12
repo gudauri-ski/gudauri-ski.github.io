@@ -176,6 +176,32 @@ nav button[aria-current=true]{background:transparent;color:var(--brand)}
 nav button[aria-current=true] svg{background:var(--tint2);border-radius:10px;padding:3px 14px;box-sizing:content-box}
 nav button.has::after{content:attr(data-n);position:absolute;top:2px;inset-inline-end:calc(50% - 26px);background:var(--accent);color:#fff;font-size:.68rem;font-weight:700;min-width:18px;height:18px;line-height:18px;border-radius:9px;padding:0 5px;text-align:center}
 #toast{bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+
+/* ---- Payments: collapsed bookings, payments in 4 currencies, summary by month ---- */
+.pay summary b{font-size:1rem}
+.chev{width:20px;height:20px;color:var(--mute);transition:transform .2s;flex:none}
+.pay[open] .chev{transform:rotate(-90deg)}
+.pay .det .acts .trash{position:static}
+.plist{margin-top:10px;display:flex;flex-direction:column;gap:6px}
+.pitem{display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--bg);border-radius:10px;padding:8px 10px;font-size:.9rem}
+.pitem .sub{font-size:.8rem}
+.pitem .trash{position:static;flex:none}
+.padd{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr) minmax(0,1.2fr);gap:8px;margin-top:6px}
+.padd>*{min-width:0}
+.pprev{font-size:.86rem;color:var(--mute);min-height:1.3em;margin-top:6px}
+.pprev b{color:var(--ink)}
+.mrow{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:1px solid var(--line);font-size:.93rem}
+.mrow:last-child{border-bottom:0}
+.mrow span{color:var(--mute)}
+.mrow b{text-align:end}
+.hours{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.hours b{font-family:"Secular One",Assistant,Arial,sans-serif;font-weight:400;font-size:1.4rem;color:var(--brand)}
+.chkl{display:flex;align-items:center;gap:10px;color:var(--ink);font-size:.95rem;margin:8px 0}
+.chkl input{width:22px;height:22px;flex:none;accent-color:var(--brand)}
+.tfile{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:4px}
+.tfile label.ghost{display:inline-block;margin:0;cursor:pointer}
+#offl{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:24px;z-index:30;text-align:center}
+#offl[hidden]{display:none}
 </style>
 </head>
 <body>
@@ -183,6 +209,7 @@ nav button.has::after{content:attr(data-n);position:absolute;top:2px;inset-inlin
 <div class="hd"><svg class="logo" viewBox="10 10 46 52" aria-hidden="true"><rect class="cv" x="15" y="14" width="36" height="46" rx="6"/><rect class="pg" x="20" y="19" width="26" height="36" rx="3"/><path class="fl" d="M40 22v10M35 27h10M36.5 23.5l7 7M43.5 23.5l-7 7"/><path class="mt" d="M21 51 L29.5 34 L34.5 42 L38 37.5 L45 51 Z"/><path class="sn" d="M29.5 34 L32 38 L30.5 37.2 L29.5 39 L28.3 37.3 L26.8 39.1 Z"/><g class="rg"><circle cx="15" cy="26" r="2.3"/><circle cx="15" cy="37" r="2.3"/><circle cx="15" cy="48" r="2.3"/></g></svg><div class="ttl"><h1>יומן שיעורי סקי</h1><div id="hdate"></div></div><button class="acctb" id="acct" data-act="acct" aria-label="החשבון שלי" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg></button></div>
 </header>
 <main id="main"></main>
+<div id="offl" hidden><div class="askbox"><p class="nm">אין חיבור לאינטרנט</p><p class="sub">היומן עובד רק עם אינטרנט, כדי שתמיד תראה את הנתונים העדכניים. כשהחיבור יחזור הוא ייפתח שוב לבד.</p><div class="acts" style="justify-content:center"><button class="btn" data-act="retry">לנסות שוב</button></div></div></div>
 <div id="toast" role="status"></div>
 <div id="ask" hidden><div class="askbox"><div id="askq"><p id="asktxt" class="nm"></p><p class="sub">כן: ימחק כאן, ואראה לך קישורים לימים של האירועים ב-Google Calendar כדי שתמחק אותם שם. לא: ימחק רק כאן.</p><div class="acts"><button class="btn" data-act="askYes">כן</button><button class="ghost" data-act="askNo">לא</button><button class="ghost" data-act="askCancel">ביטול</button></div></div><div id="askl" hidden><p class="nm">למחיקה ב-Google Calendar</p><p class="sub">לחץ על כל יום, מצא את האירוע של <span id="askname"></span> ומחק אותו.</p><div id="asklist"></div><div class="acts"><button class="ghost" data-act="askDone">סיימתי</button></div></div><div id="askc" hidden><p class="nm">לעדכן גם ב-Google Calendar</p><p class="sub">שיעור של <span id="askcname"></span> כבר היה ביומן, והמועד שלו השתנה. היומן לא מתעדכן לבד: מחק שם את האירוע הישן והוסף את החדש.</p><div id="askclist"></div><div class="acts"><button class="ghost" data-act="askDone">סיימתי</button></div></div></div></div>
 <div id="acctm" hidden><div class="askbox"><p class="nm" style="margin:0">החשבון שלי</p><p class="sub" id="acctmail" dir="ltr" style="text-align:start;margin:4px 0 0"></p><div class="stack"><button class="ghost" data-act="exp">שמירת גיבוי לקובץ</button><label class="ghost" style="color:var(--mute)">ייבוא נתונים מקובץ גיבוי<input type="file" id="impf" accept=".json,application/json" hidden></label><div id="impq"></div><button class="ghost danger" data-act="logout">יציאה מהחשבון</button><button class="btn" data-act="acctClose">סגירה</button></div></div></div>
@@ -201,7 +228,7 @@ const today=()=>new Date().toLocaleDateString('sv-SE');
 const addD=(d,n)=>{const x=new Date(d+'T00:00');x.setDate(x.getDate()+n);return x.toLocaleDateString('sv-SE')};
 const fmtD=d=>new Date(d+'T00:00').toLocaleDateString('he-IL',{weekday:'long',day:'numeric',month:'long'});
 const fmtS=d=>new Date(d+'T00:00').toLocaleDateString('he-IL',{weekday:'short',day:'numeric',month:'numeric'});
-const money=(n,c)=>(c||'€')+(+n||0).toLocaleString('he-IL');
+const money=(n,c)=>(c||'€')+(+n||0).toLocaleString('he-IL',{maximumFractionDigits:2});
 const first=n=>(n||'').trim().split(/\s+/)[0];
 const hh=t=>t.endsWith(':00')?String(+t.slice(0,2)):t;
 const dh=h=>h===1?'שעה':h===2?'שעתיים':h+' שעות';
@@ -216,7 +243,25 @@ const DEP=['ממתין','שולם','הועבר לשירה לב'];
 const EXP1='גולש בפעם הראשונה',EXP2='עם ניסיון קודם',EXP_OLD={'פעם ראשונה':EXP1,'ניסיון קודם':EXP2,'נסיון קודם':EXP2,'עם נסיון קודם':EXP2};
 const expJoin=(t,d)=>t?(t===EXP2&&d?t+' ('+d+')':t):'';
 const expSplit=b=>{if(b.expT!=null)return [EXP_OLD[b.expT]||b.expT,(b.expD||'').replace(/נסיון/g,'ניסיון')];const x=(b.exp||'').trim().replace(/נסיון/g,'ניסיון');if(!x)return ['',''];if(/ראשונ|מתחיל|אין ניסיון|ללא ניסיון|בלי ניסיון/.test(x))return [EXP1,''];if(/^(יש ניסיון|ניסיון קודם|ניסיון|עם ניסיון|עם ניסיון קודם)$/.test(x))return [EXP2,''];return [EXP2,x]};
-const mig=()=>{S.bookings.forEach(b=>{if(b.depSt==='שילם')b.depSt='שולם';else if(b.depSt==='לא שילם')b.depSt='ממתין';if((b.expT==null&&b.exp)||EXP_OLD[b.expT]){const[t,d]=expSplit(b);b.expT=t;b.expD=d;b.exp=expJoin(t,d)}});S.bookings=S.bookings.filter(b=>S.lessons.some(l=>l.bid===b.id))};
+const mig=()=>{S.bookings.forEach(b=>{if(b.depSt==='שילם')b.depSt='שולם';else if(b.depSt==='לא שילם')b.depSt='ממתין';if((b.expT==null&&b.exp)||EXP_OLD[b.expT]){const[t,d]=expSplit(b);b.expT=t;b.expD=d;b.exp=expJoin(t,d)}if(+b.paid>0&&!b.pays){b.pays=[{id:uid(),a:+b.paid,c:symCode(b.cur),d:'',r:null}];b.paid=0}});S.bookings=S.bookings.filter(b=>S.lessons.some(l=>l.bid===b.id))};
+// ---- Cash payments in 4 currencies. Each payment keeps the day's rates (units per 1 euro), so its euro value never changes later.
+// p = {id, a: amount, c: 'EUR'|'USD'|'GEL'|'ILS', d: payment date, r: {USD,GEL,ILS}, rd: date of the rate}
+const CUR={EUR:'€',USD:'$',GEL:'₾',ILS:'₪'},CODES=['EUR','USD','GEL','ILS'];
+const symCode=s=>s==='₪'?'ILS':'EUR';
+const r2=n=>Math.round(n*100)/100;
+const pEur=p=>p.c==='EUR'?+p.a:(p.r&&p.r[p.c]?p.a/p.r[p.c]:0);
+const pIn=(p,sym)=>{const code=symCode(sym);if(p.c===code)return +p.a;const e=pEur(p);return code==='EUR'?e:e*((p.r&&p.r.ILS)||0)};
+const paysOf=b=>(b.pays||[]).reduce((s,p)=>s+pIn(p,b.cur),0);
+const RATES={};
+// Free daily rates (no key). Today = latest; an earlier day = that day's rates. Second address is the same data from a backup host.
+async function getRates(d){
+ const k=d>=today()?'latest':d;if(RATES[k])return RATES[k];
+ const urls=['https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@'+k+'/v1/currencies/eur.min.json','https://'+k+'.currency-api.pages.dev/v1/currencies/eur.min.json'];
+ for(const u of urls){try{const j=await(await fetch(u)).json(),e=j&&j.eur;if(e&&e.usd&&e.gel&&e.ils)return RATES[k]={USD:e.usd,GEL:e.gel,ILS:e.ils,d:j.date}}catch(e){}}
+ throw new Error('rates');
+}
+const num=n=>(+n||0).toLocaleString('he-IL',{maximumFractionDigits:2});
+const rateTxt=(c,r)=>c==='EUR'?'':'שער: 1€ = '+num(r2(r[c]))+CUR[c];
 const icoCal='<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3" fill="#fff" stroke="#4285F4" stroke-width="1.6"/><path d="M3 6a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3v3H3z" fill="#4285F4"/><text x="12" y="19" text-anchor="middle" font-size="9" font-weight="700" fill="#4285F4" font-family="Arial,sans-serif">31</text></svg>';
 const icoWa='<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#25D366"/><path fill="#fff" d="M7.5 6.5c.6-.6 1.3-.5 1.6.2l.8 1.8c.2.5 0 .9-.3 1.3l-.5.6c.8 1.6 1.8 2.6 3.4 3.4l.6-.5c.4-.3.9-.5 1.4-.3l1.7.8c.7.3.8 1 .2 1.6-.9 1-2 1.3-3.3.8-3-1.1-5.2-3.3-6.3-6.3-.5-1.3-.2-2.4.7-3.4z"/></svg>';
 const icoDel='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 3h4M6 7l1 13h10l1-13M10 11v6M14 11v6"/></svg>';
@@ -276,8 +321,8 @@ async function flush(){
  saving=true;dirty=false;
  let ok=false,ch=false;try{ch=await push();ok=true}catch(e){}
  saving=false;
- if(ok){setStatus('✓ נשמר');if(ch&&!adding&&!editId)render();if(dirty)flush()}
- else{dirty=true;setStatus('השמירה נכשלה, מנסה שוב…');setTimeout(flush,3000)}
+ if(ok){if(ch&&!adding&&!editId)render();if(dirty)flush()}
+ else{dirty=true;setStatus(navigator.onLine?'השמירה נכשלה, מנסה שוב…':'אין חיבור לאינטרנט, השינוי יישמר כשהחיבור יחזור');setTimeout(flush,3000)}
 }
 async function pull(){
  const d=await fetchCloud();
@@ -299,12 +344,22 @@ async function start(u){
  try{const c=localStorage.getItem(LK());if(c)S=JSON.parse(c)}catch(e){}
  if(!S.bookings)S={bookings:[],lessons:[]};
  mig();prev=snap(S);tab='lessons';adding=false;editId=null;calD=null;calSel=null;confirmId=null;
- render();
- try{await pull();setStatus('✓ נשמר');if(dirty)flush();backup()}catch(e){setStatus('אין חיבור, נשמר במכשיר הזה')}
- if(!adding&&!editId&&!recovery)render();
+ await load();
 }
+// Online only: the diary is shown only after the cloud copy is read. Without internet a full-screen notice covers the app.
+// (This device's copy is kept only so unsent changes are not lost; it is never shown on its own.)
+let loaded=false,netErr=false;
+async function load(){
+ loaded=false;netErr=false;render();
+ try{await pull();loaded=true;if(dirty)flush();backup()}catch(e){netErr=true}
+ if(!adding&&!editId&&!recovery)render();else updNet();
+}
+const updNet=()=>{const o=$('#offl');if(o)o.hidden=!(user&&!recovery&&(netErr||!navigator.onLine))};
+addEventListener('offline',updNet);
+addEventListener('online',()=>{updNet();if(user&&!recovery){if(!loaded)load();else{dirty=true;flush();pull().then(ch=>{if(ch&&!adding&&!editId)render()}).catch(()=>{})}}});
 document.addEventListener('visibilitychange',()=>{
  if(document.visibilityState==='hidden'){dirty=true;flush()}
+ else if(user&&!recovery&&!loaded)load();
  else if(user&&!recovery&&!dirty&&!saving)pull().then(ch=>{if(dirty)flush();if(ch&&!adding&&!editId)render()}).catch(()=>{});
 });
 addEventListener('pagehide',()=>{dirty=true;flush()});
@@ -395,6 +450,7 @@ function bookingForm(){return `<div class="card">${1?`<div class="autofill"><lab
 <div class="row"><div><label for="f-total">סכום שסוכם</label><input id="f-total" type="number" inputmode="numeric" min="0"></div><div><label for="f-cur">מטבע</label><select id="f-cur"><option value="€">יורו €</option><option value="₪">שקל ₪</option></select></div></div>
 <div class="row"><div><label for="f-dep">סכום מקדמה (10% אוטומטי)</label><input id="f-dep" type="number" inputmode="numeric" min="0"></div><div><label for="f-depst">מקדמה</label><select id="f-depst">${DEP.map(o=>`<option>${o}</option>`).join('')}</select></div></div>
 <div class="cashline">נשאר לתשלום במזומן: <b id="f-cash">€0</b></div>
+<h3>תנאי הזמנה</h3><label class="chkl"><input type="checkbox" id="f-terms"> חתם על תנאי הזמנת השיעור</label><div class="tfile" id="tfw"></div>
 <label for="f-note">הערות</label><textarea id="f-note" rows="3"></textarea>
 <div id="err"></div><div class="acts"><button class="btn" data-act="saveB">שמירת הזמנה</button><button class="ghost" data-act="cancel">ביטול</button></div></div>`}
 
@@ -467,29 +523,89 @@ let tplOpen=false;
 // Live update while typing: refresh the reminder links and the example without re-rendering (keeps the keyboard open).
 function tplLive(){const t=$('#tpl');if(!t)return;S.tpl=t.value.trim()===DEF_TPL?'':t.value;$$('[data-act=remind][data-l]').forEach(a=>{const l=S.lessons.find(x=>x.id===a.dataset.l);if(l)a.href=waUrl(l)});const ex=$('#tplex'),al=S.lessons.filter(l=>l.date>=today()).sort(cmp),l=al.find(x=>waNum(bOf(x)))||al[0];if(ex&&l)ex.textContent=remMsg(l)}
 document.addEventListener('toggle',e=>{if(e.target.id==='tpld')tplOpen=e.target.open},true);
-const paidOf=b=>(b.depSt!=='ממתין'?+b.dep||0:0)+(+b.paid||0);
-const recOf=b=>(b.depSt==='שולם'?+b.dep||0:0)+(+b.paid||0);
-const remOf=b=>Math.max(0,(+b.total||0)-paidOf(b));
-const sumBy=f=>{const o={};S.bookings.forEach(b=>{const v=f(b);if(v)o[b.cur]=(o[b.cur]||0)+v});const k=Object.entries(o);return k.length?k.map(([c,v])=>money(v,c)).join(' + '):money(0)};
+const paidOf=b=>(b.depSt!=='ממתין'?+b.dep||0:0)+(+b.paid||0)+paysOf(b);
+const recOf=b=>(b.depSt==='שולם'?+b.dep||0:0)+(+b.paid||0)+paysOf(b);
+const remOf=b=>Math.max(0,r2((+b.total||0)-paidOf(b)));
+const sumBy=f=>{const o={};S.bookings.forEach(b=>{const v=f(b);if(v)o[b.cur]=(o[b.cur]||0)+v});const k=Object.entries(o);return k.length?k.map(([c,v])=>money(r2(v),c)).join(' + '):money(0)};
+const grp=o=>Object.entries(o).filter(([,v])=>v).map(([c,v])=>money(r2(v),c)).join(' · ');
+const dFull=d=>d?new Date(d+'T00:00').toLocaleDateString('he-IL'):'';
+const firstD=b=>{const l=S.lessons.filter(x=>x.bid===b.id).sort(cmp)[0];return l?l.date:''};
+const bMonth=b=>firstD(b).slice(0,7);
+const hrsOf=L=>L.reduce((s,l)=>s+(+l.dur||0),0);
+// Money rows for a group of bookings: deposits (received / passed to Shira Lev), cash by currency, cash in euros, still due.
+function moneyRows(B,L,hours){
+ const dep={},sl={},cash={},due={};let cashEur=0,other=false;
+ B.forEach(b=>{if(+b.dep){if(b.depSt==='שולם')dep[b.cur]=(dep[b.cur]||0)+ +b.dep;else if(b.depSt==='הועבר לשירה לב')sl[b.cur]=(sl[b.cur]||0)+ +b.dep}
+  if(+b.paid)cash[b.cur]=(cash[b.cur]||0)+ +b.paid;
+  (b.pays||[]).forEach(p=>{const k=CUR[p.c];cash[k]=(cash[k]||0)+ +p.a;cashEur+=pEur(p);if(p.c!=='EUR')other=true});
+  const r=remOf(b);if(r)due[b.cur]=(due[b.cur]||0)+r});
+ const h=hrsOf(L),row=(t,v)=>`<div class="mrow"><span>${t}</span><b>${v}</b></div>`;
+ return (hours?row('שעות הדרכה סגורות',h):'')
+  +row('מקדמות שהתקבלו',grp(dep)||'—')+(grp(sl)?row('מקדמות שהועברו לשירה לב',grp(sl)):'')
+  +row('מזומן',[CUR.EUR,CUR.USD,CUR.GEL,CUR.ILS].filter(c=>cash[c]).map(c=>money(r2(cash[c]),c)).join(' · ')||'—')
+  +(other?row('מזומן בשווי יורו',money(r2(cashEur),'€')):'')
+  +row('ממתין לתשלום',grp(due)||'—');
+}
+const icoChev='<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>';
+let payOpen=new Set(),monOpen=new Set();
+const payItem=(b,p)=>`<div class="pitem"><div><b>${money(r2(p.a),CUR[p.c])}</b>${p.c!=='EUR'&&p.r?` = ${money(r2(pEur(p)),'€')}`:''}<div class="sub">${[dFull(p.d),p.r?rateTxt(p.c,p.r):''].filter(Boolean).join(' · ')}</div></div><button class="trash${confirmId===p.id?' on':''}" data-act="delPay" data-id="${p.id}" data-b="${b.id}" aria-label="מחיקת התשלום">${confirmId===p.id?'למחוק?':icoDel}</button></div>`;
 function vPay(){
+ const L=S.lessons;
  let h=`<div class="sum"><div class="card"><small>התקבל</small><b>${sumBy(recOf)}</b></div><div class="card due"><small>ממתין לתשלום</small><b>${sumBy(remOf)}</b></div></div>`;
+ const pastH=hrsOf(L.filter(l=>l.date<today()));
+ h+=`<div class="card hours"><div><div class="sub">שעות הדרכה סגורות</div>${pastH?`<div class="sub">מתוכן ${pastH} כבר היו</div>`:''}</div><b>${hrsOf(L)}</b></div>`;
  if(!S.bookings.length)return h+'<div class="empty">אין הזמנות עדיין.</div>';
- S.bookings.forEach(b=>{const r=remOf(b),f=(k,v)=>`data-f="${k}" data-id="${b.id}" value="${v||''}"`;
-  h+=`<div class="card"><div class="nm">${esc(b.name)}</div>
-<div class="row"><label>סכום שסוכם (${b.cur})<input type="number" inputmode="numeric" ${f('total',b.total)}></label><label>מקדמה (${b.cur})<input type="number" inputmode="numeric" ${f('dep',b.dep)}></label></div>
+ h+=`<div class="card">${moneyRows(S.bookings,L,false)}</div>`;
+ h+='<h2>הזמנות</h2>';
+ S.bookings.slice().sort((x,y)=>firstD(x).localeCompare(firstD(y))).forEach(b=>{const r=remOf(b),f=(k,v)=>`data-f="${k}" data-id="${b.id}" value="${v||''}"`,bl=S.lessons.filter(l=>l.bid===b.id).sort(cmp);
+  h+=`<details class="ent pay" data-b="${b.id}"${payOpen.has(b.id)?' open':''}><summary><b>${esc(b.name)}</b>${icoChev}</summary><div class="det">
+<div class="sub">${bl.map(l=>fmtS(l.date)+' '+l.start+'–'+l.end).join(' · ')}</div>
+<div class="row"><label>סכום שסוכם (${b.cur})<input type="number" inputmode="decimal" ${f('total',b.total)}></label><label>מקדמה (${b.cur})<input type="number" inputmode="decimal" ${f('dep',b.dep)}></label></div>
 <label>מקדמה<select data-f="depSt" data-id="${b.id}">${DEP.map(o=>`<option${o===b.depSt?' selected':''}>${o}</option>`).join('')}</select></label>
-<label>שולם על השיעורים (${b.cur})<input type="number" inputmode="numeric" ${f('paid',b.paid||0)}></label>
-<div class="remain">נשאר לתשלום במזומן: <b style="color:${r?'var(--accent)':'var(--ok)'}">${r?money(r,b.cur):'שולם במלואו'}</b></div>${edt(b.id)}${del(b.id,'delB')}</div>`});
+<h3>שולם על השיעורים</h3>
+${(b.pays||[]).length?`<div class="plist">${b.pays.map(p=>payItem(b,p)).join('')}</div>`:''}
+<div class="padd"><div><label>סכום</label><input type="number" inputmode="decimal" min="0" class="pa" data-id="${b.id}"></div><div><label>מטבע</label><select class="pc" data-id="${b.id}">${CODES.map(c=>`<option value="${c}">${CUR[c]} ${{EUR:'יורו',USD:'דולר',GEL:'לארי',ILS:'שקל'}[c]}</option>`).join('')}</select></div><div><label>תאריך</label><input type="date" class="pd" data-id="${b.id}" value="${today()}"></div></div>
+<div class="pprev"></div>
+<div class="acts"><button class="btn" data-act="addPay" data-id="${b.id}">הוספת תשלום</button></div>
+<div class="remain">נשאר לתשלום במזומן: <b style="color:${r?'var(--accent)':'var(--ok)'}">${r?money(r,b.cur):'שולם במלואו'}</b></div>
+<div class="sub" style="margin-top:6px">תנאי הזמנה: ${b.terms?'✓ נחתם':'לא נחתם'}${b.tf?` · <button class="linkb" data-act="viewTf" data-id="${b.id}">צפייה בקובץ</button>`:''}</div>
+<div class="acts">${edt(b.id)}${del(b.id,'delB')}</div></div></details>`});
+ // By month: each booking counts in the month of its first lesson; hours count by each lesson's own date.
+ const ms=[...new Set(S.lessons.map(l=>l.date.slice(0,7)).concat(S.bookings.map(bMonth)).filter(Boolean))].sort();
+ if(ms.length){h+='<h2>לפי חודש</h2>';ms.forEach(m=>{const B=S.bookings.filter(b=>bMonth(b)===m),ML=S.lessons.filter(l=>l.date.startsWith(m)),t=new Date(m+'-01T00:00').toLocaleDateString('he-IL',{month:'long',year:'numeric'});
+  h+=`<details class="ent pay mon" data-m="${m}"${monOpen.has(m)?' open':''}><summary><b>${t}</b><span>${hrsOf(ML)} שעות</span>${icoChev}</summary><div class="det">${moneyRows(B,ML,true)}</div></details>`})}
  return h;
 }
+// Live preview while typing a payment: its value in euros by that day's rate.
+let pvTok=0;
+async function payPrev(box){
+ const a=+box.querySelector('.pa').value,c=box.querySelector('.pc').value,d=box.querySelector('.pd').value||today(),o=box.querySelector('.pprev'),k=++pvTok;
+ if(!(a>0)||c==='EUR'){o.textContent='';return}
+ o.textContent='בודק שער…';
+ try{const r=await getRates(d);if(k!==pvTok)return;o.innerHTML=`= <b>${money(r2(a/r[c]),'€')}</b> · ${rateTxt(c,r)} (${dFull(r.d)})`}
+ catch(e){if(k===pvTok)o.textContent='לא הצלחתי להביא את שער ההמרה כרגע.'}
+}
+async function addPay(id,btn){
+ const b=S.bookings.find(x=>x.id===id);if(!b)return;
+ const box=btn.closest('.det'),a=+box.querySelector('.pa').value,c=box.querySelector('.pc').value,d=box.querySelector('.pd').value||today(),o=box.querySelector('.pprev');
+ if(!(a>0)){o.textContent='הכנס סכום';return}
+ btn.disabled=true;let r=null;
+ try{r=await getRates(d)}catch(e){if(!(c==='EUR'&&b.cur==='€')){o.textContent='לא הצלחתי להביא את שער ההמרה. בדוק את החיבור ונסה שוב.';btn.disabled=false;return}}
+ (b.pays=b.pays||[]).push({id:uid(),a,c,d,r:r&&{USD:r.USD,GEL:r.GEL,ILS:r.ILS},rd:r&&r.d||''});
+ save();render();
+}
+document.addEventListener('toggle',e=>{const t=e.target;if(t.dataset&&t.dataset.b){t.open?payOpen.add(t.dataset.b):payOpen.delete(t.dataset.b)}else if(t.dataset&&t.dataset.m){t.open?monOpen.add(t.dataset.m):monOpen.delete(t.dataset.m)}},true);
 
 function render(){
  const out=!user||recovery;
  document.body.classList.toggle('noauth',out);$('#acct').hidden=out;
  if(!authReady){$('#main').innerHTML='';return}
- if(out){$('#main').innerHTML=vAuth();return}
+ if(out){updNet();$('#main').innerHTML=vAuth();return}
+ updNet();
+ if(!loaded){$('#main').innerHTML='<div class="empty">'+(netErr?'אין חיבור לאינטרנט.':'טוען את היומן…')+'</div>';return}
  $('#main').innerHTML=tab==='lessons'?vLessons():tab==='cal'?vCal():tab==='remind'?vRemind():vPay();
  if(editId&&tab==='lessons'){const eb=S.bookings.find(x=>x.id===editId);if(eb)fillForm(eb)}
+ tfUi();
  $$('nav button').forEach(b=>b.setAttribute('aria-current',b.dataset.id===tab));
  const n=remList().filter(x=>!x.b.rem&&x.l.date<=addD(today(),2)).length;
  $('nav [data-id=remind]').classList.toggle('has',!!n);$('nav [data-id=remind]').dataset.n=n||'';
@@ -507,7 +623,7 @@ function fillForm(b){
  $('#f-name').closest('.card').insertAdjacentHTML('afterbegin','<div class="nm">עריכת הזמנה</div>');
  $('#f-name').value=b.name;$('#f-phone').value=b.phone||'';
  $('#f-n').value=b.n||1;$('#ages').innerHTML=ageHtml(+$('#f-n').value,b.ages||[]);
- setExp(...expSplit(b));$('#f-note').value=b.note||'';
+ setExp(...expSplit(b));$('#f-note').value=b.note||'';$('#f-terms').checked=!!b.terms;
  $('#f-total').value=b.total||'';$('#f-cur').value=b.cur;$('#f-dep').value=b.dep||'';$('#f-depst').value=b.depSt;$('#f-dep').dataset.manual='1';
  const L=S.lessons.filter(l=>l.bid===b.id).sort(cmp);
  if(L.length){$('#sess').innerHTML=L.map((l,i)=>sessRow(i+1)).join('');$$('#sess .sess').forEach((r,i)=>{const l=L[i];r.dataset.id=l.id;r.querySelector('.s-date').value=l.date;r.querySelector('.s-st').value=l.start;r.querySelector('.s-en').value=l.end;r.querySelector('.s-dur').value=l.dur})}
@@ -517,11 +633,11 @@ function saveBooking(){
  const name=$('#f-name').value.trim();if(!name){err('הכנס שם המזמין');return false}
  const rows=$$('#sess .sess').map(r=>({id:r.dataset.id||'',date:r.querySelector('.s-date').value,start:r.querySelector('.s-st').value,end:r.querySelector('.s-en').value,dur:+r.querySelector('.s-dur').value}));
  if(rows.some(r=>!r.date||!r.start||!r.end)){err('חסרים תאריך או שעות באחד השיעורים');return false}
- const b={id:uid(),name,phone:$('#f-phone').value.trim(),n:+$('#f-n').value,ages:$$('.f-age').map(i=>+i.value||0),expT:$('#f-expt').value,expD:$('#f-expt').value===EXP2?$('#f-expd').value.trim():'',exp:expJoin($('#f-expt').value,$('#f-expd').value.trim()),note:$('#f-note').value.trim(),cur:$('#f-cur').value,total:+$('#f-total').value||0,dep:+$('#f-dep').value||0,depSt:$('#f-depst').value,paid:0};
+ const b={id:uid(),name,phone:$('#f-phone').value.trim(),n:+$('#f-n').value,ages:$$('.f-age').map(i=>+i.value||0),expT:$('#f-expt').value,expD:$('#f-expt').value===EXP2?$('#f-expd').value.trim():'',exp:expJoin($('#f-expt').value,$('#f-expd').value.trim()),note:$('#f-note').value.trim(),cur:$('#f-cur').value,total:+$('#f-total').value||0,dep:+$('#f-dep').value||0,depSt:$('#f-depst').value,paid:0,terms:$('#f-terms').checked,tf:formTf};if(!editId&&formBid)b.id=formBid;
  const oc={};S.lessons.forEach(l=>{if(l.cal)oc[l.id]=l.date+l.start+l.end});
  // Lessons of this booking that were already in Google Calendar, to spot the ones that moved or were removed.
  const was=editId?S.lessons.filter(l=>l.bid===editId&&l.cal).map(l=>({...l})):[];
- if(editId){const o=S.bookings.find(x=>x.id===editId);Object.assign(o,{...b,id:o.id,paid:o.paid,rem:o.rem});b.id=o.id;S.lessons=S.lessons.filter(l=>l.bid!==editId)}else S.bookings.push(b);
+ if(editId){const o=S.bookings.find(x=>x.id===editId);if(o.tf&&(!formTf||formTf.path!==o.tf.path))rmFiles([o.tf]);Object.assign(o,{...b,id:o.id,paid:o.paid,rem:o.rem,pays:o.pays});b.id=o.id;S.lessons=S.lessons.filter(l=>l.bid!==editId)}else S.bookings.push(b);
  rows.forEach(r=>S.lessons.push({...r,id:r.id||uid(),bid:b.id,cal:oc[r.id]===r.date+r.start+r.end}));adding=false;editId=null;save();
  const upd=was.map(o=>({o,n:S.lessons.find(l=>l.id===o.id)||null})).filter(x=>!x.n||!x.n.cal);
  if(upd.length)setTimeout(()=>showCalUpd(b.name,upd),0);
@@ -537,23 +653,30 @@ function parseMsg(txt,todayStr){
  const pad=n=>String(n).padStart(2,'0'),[ty,tm,td]=todayStr.split('-').map(Number);
  const mkDate=(d,m,y)=>{if(!(m>=1&&m<=12&&d>=1&&d<=31))return null;if(y){y=+y;if(y<100)y+=2000}else{y=ty;if(m<tm||(m===tm&&d<td))y++}return y+'-'+pad(m)+'-'+pad(d)};
  const hr=(h,m)=>{h=+h;m=m?+m:0;if(h<8)h+=12;return h<=23&&m<=59?pad(h)+':'+pad(m):null};
- const tok=[];
+ const tok=[];let x,used=[];
+ const free=i=>!used.some(([a,b])=>i>=a&&i<b),mark=x=>used.push([x.index,x.index+x[0].length]);
+ // date ranges first: 2-6 למרץ / 2 עד 6 במרץ / 2-6.3 / 2.3-6.3 = every day from the first to the last
+ const span=(a,b)=>{const o=[];if(!a||!b||b<a)return o;for(let d=a;d<=b&&o.length<14;d=addD(d,1))o.push(d);return o};
+ const MONS=Object.keys(MON).join('|'),DASH='\\s*(?:-|–|—|עד)\\s*';
+ [[new RegExp(nb+'(\\d{1,2})'+DASH+'(\\d{1,2})\\s*(?:ב|ל)?-?\\s*('+MONS+')','g'),x=>[mkDate(+x[1],MON[x[3]]),mkDate(+x[2],MON[x[3]])]],
+  [new RegExp(nb+'(\\d{1,2})[./](\\d{1,2})'+DASH+'(\\d{1,2})[./](\\d{1,2})(?:[./](\\d{2,4}))?(?![\\d:])','g'),x=>[mkDate(+x[1],+x[2],x[5]),mkDate(+x[3],+x[4],x[5])]],
+  [new RegExp(nb+'(\\d{1,2})\\s*(?:-|–|—)\\s*(\\d{1,2})[./](\\d{1,2})(?:[./](\\d{2,4}))?(?![\\d:])','g'),x=>[mkDate(+x[1],+x[3],x[4]),mkDate(+x[2],+x[3],x[4])]]
+ ].forEach(([re,f])=>{while((x=re.exec(T))){if(!free(x.index))continue;let[a,b]=f(x);if(a&&b&&b<a){if(b.slice(5)<a.slice(5))b=(+a.slice(0,4)+1)+b.slice(4);else a=b.slice(0,4)+a.slice(4)}const ds=span(a,b);if(ds.length>1){tok.push({i:x.index,t:'date',ds});mark(x)}}});
  // time ranges: 14-16, 14:00-16:00, בין 14 ל-16, מ-14 עד 16, 2-4 (=14:00-16:00)
- const rRange=new RegExp(nb+'(\\d{1,2})(?:[:.](\\d{2}))?\\s*(?:-|–|—|עד|ל-?)\\s*(\\d{1,2})(?:[:.](\\d{2}))?(?!\\d|[./]\\d|\\s*(?:ב?(?:'+Object.keys(MON).join('|')+')))','g');
- let x,used=[];
- while((x=rRange.exec(T))){const s=hr(x[1],x[2]),e=hr(x[3],x[4]);if(s&&e&&s<e){tok.push({i:x.index,t:'time',s,e});used.push([x.index,x.index+x[0].length])}}
- const free=i=>!used.some(([a,b])=>i>=a&&i<b);
+ const rRange=new RegExp(nb+'(\\d{1,2})(?:[:.](\\d{2}))?\\s*(?:-|–|—|עד|ל-?)\\s*(\\d{1,2})(?:[:.](\\d{2}))?(?!\\d|[./]\\d|\\s*(?:ב|ל)?-?\\s*(?:'+MONS+'))','g');
+ while((x=rRange.exec(T))){if(!free(x.index))continue;const s=hr(x[1],x[2]),e=hr(x[3],x[4]);if(s&&e&&s<e){tok.push({i:x.index,t:'time',s,e});mark(x)}}
  // single start time: בשעה 10 / בשעה 10:30 (lesson of 2 hours)
  const rAt=/(?:בשעה|שעה)\s*(\d{1,2})(?::(\d{2}))?(?!\s*(?:-|–|עד))/g;
  while((x=rAt.exec(T))){if(!free(x.index))continue;const s=hr(x[1],x[2]);if(s){const [h,m]=s.split(':').map(Number);tok.push({i:x.index,t:'time',s,e:pad(Math.min(23,h+2))+':'+pad(m)})}}
  // dates: 22.1 / 22/1 / 22.1.27 / 3 בינואר / 3 לינואר
  const rDate=new RegExp(nb+'(\\d{1,2})[./](\\d{1,2})(?:[./](\\d{2,4}))?(?![\\d:])','g');
- while((x=rDate.exec(T))){if(!free(x.index))continue;const d=mkDate(+x[1],+x[2],x[3]);if(d)tok.push({i:x.index,t:'date',d})}
+ while((x=rDate.exec(T))){if(!free(x.index))continue;const d=mkDate(+x[1],+x[2],x[3]);if(d)tok.push({i:x.index,t:'date',ds:[d]})}
  const rMon=new RegExp(nb+'(\\d{1,2})\\s*(?:ב|ל)?-?\\s*('+Object.keys(MON).join('|')+')','g');
- while((x=rMon.exec(T))){const d=mkDate(+x[1],MON[x[2]]);if(d)tok.push({i:x.index,t:'date',d})}
+ while((x=rMon.exec(T))){if(!free(x.index))continue;const d=mkDate(+x[1],MON[x[2]]);if(d)tok.push({i:x.index,t:'date',ds:[d]})}
  tok.sort((a,b)=>a.i-b.i);
  let cur=null,pend=[];
- tok.forEach(k=>{if(k.t==='date'){cur=k.d;pend.forEach(p=>out.lessons.push({date:cur,start:p.s,end:p.e}));pend=[]}else if(cur)out.lessons.push({date:cur,start:k.s,end:k.e});else pend.push(k)});
+ const put=(ds,k)=>ds.forEach(d=>out.lessons.push({date:d,start:k.s,end:k.e}));
+ tok.forEach(k=>{if(k.t==='date'){cur=k.ds;pend.forEach(p=>put(cur,p));pend=[]}else if(cur)put(cur,k);else pend.push(k)});
  // phone (Israeli)
  const ph=T.match(/(?:\+?972[-\s]?|0)5\d[-\s]?\d{3}[-\s]?\d{4}/);if(ph)out.phone=ph[0].replace(/\s/g,'');
  // ages: בן 10 / בת 8 / בני 6 ו-8 / גילאים 23, 30
@@ -617,8 +740,28 @@ function fillFrom(d){
  if(L.length){$('#sess').innerHTML=L.map((l,i)=>sessRow(i+1)).join('');$$('#sess .sess').forEach((r,i)=>{const l=L[i];r.querySelector('.s-date').value=l.date;r.querySelector('.s-st').value=l.start;r.querySelector('.s-en').value=l.end;r.querySelector('.s-dur').value=autoDur(l.start,l.end)})}
  cash();
 }
+// ---- Signed booking terms: a tick + the signed file (PDF or photo), kept privately in Supabase Storage under the user's own folder.
+let formTf=null,formBid='';
+function tfUi(){const w=$('#tfw');if(!w)return;w.innerHTML=formTf?`<span class="sub">קובץ: ${esc(formTf.name)}</span><button type="button" class="linkb" data-act="viewTf" data-id="">צפייה</button><button type="button" class="linkb" data-act="rmTf">הסרה</button><span class="sub" id="tfmsg"></span>`:`<label class="ghost">צירוף הקובץ החתום<input type="file" id="f-tf" accept="application/pdf,image/*" hidden></label><span class="sub" id="tfmsg"></span>`}
+async function upTf(f){
+ if(!f||!user)return;const m=()=>$('#tfmsg')||{};
+ if(f.size>10*1024*1024){m().textContent='הקובץ גדול מדי (עד 10MB)';return}
+ const ext=((f.name.match(/\.([a-z0-9]{1,5})$/i)||[])[1]||'pdf').toLowerCase(),path=user.id+'/'+(editId||formBid||uid())+'/'+Date.now()+'.'+ext;
+ m().textContent='מעלה…';
+ const{error}=await sb.storage.from('terms').upload(path,f,{contentType:f.type||undefined});
+ if(error){m().textContent='ההעלאה נכשלה, נסה שוב.';return}
+ formTf={path,name:f.name};const c=$('#f-terms');if(c)c.checked=true;tfUi();
+}
+async function viewTf(id){
+ const t=id?(S.bookings.find(b=>b.id===id)||{}).tf:formTf;if(!t)return;
+ const w=window.open('','_blank');
+ const{data,error}=await sb.storage.from('terms').createSignedUrl(t.path,600);
+ if(error||!data){if(w)w.close();setStatus('לא הצלחתי לפתוח את הקובץ');return}
+ if(w)w.location=data.signedUrl;else location.href=data.signedUrl;
+}
+const rmFiles=fs=>{const p=fs.filter(Boolean).map(f=>f.path);if(p.length&&sb&&user)sb.storage.from('terms').remove(p).catch(()=>{})};
 let delAsk=null;
-function doDel(a,id){if(a==='del')S.lessons=S.lessons.filter(x=>x.id!==id);else{S.bookings=S.bookings.filter(x=>x.id!==id);S.lessons=S.lessons.filter(x=>x.bid!==id)}S.bookings=S.bookings.filter(b=>S.lessons.some(l=>l.bid===b.id));save()}
+function doDel(a,id){const before=S.bookings.slice();if(a==='del')S.lessons=S.lessons.filter(x=>x.id!==id);else{S.bookings=S.bookings.filter(x=>x.id!==id);S.lessons=S.lessons.filter(x=>x.bid!==id)}S.bookings=S.bookings.filter(b=>S.lessons.some(l=>l.bid===b.id));rmFiles(before.filter(b=>b.tf&&!S.bookings.includes(b)).map(b=>b.tf));save()}
 // After editing a booking: lessons already in Google Calendar that moved or were removed need updating there too.
 function showCalUpd(name,upd){
  const w=x=>fmtD(x.date)+', '+x.start+'–'+x.end;
@@ -638,11 +781,16 @@ document.addEventListener('click',e=>{
  if(a==='impNo'){impData=null;$('#impq').innerHTML='';return}
  if(a==='tplIns'){const t=$('#tpl');if(t){const s=t.selectionStart??t.value.length,e2=t.selectionEnd??s;t.value=t.value.slice(0,s)+id+t.value.slice(e2);t.focus();t.selectionStart=t.selectionEnd=s+id.length;tplLive();save()}return}
  if(a==='tplReset'){S.tpl='';save();render();return}
+ if(a==='retry'){if(user)load();return}
+ if(a==='addPay'){addPay(id,b);return}
+ if(a==='delPay'){if(confirmId!==id){confirmId=id;render();return}confirmId=null;const x=S.bookings.find(y=>y.id===b.dataset.b);if(x){x.pays=(x.pays||[]).filter(p=>p.id!==id);save()}render();return}
+ if(a==='viewTf'){viewTf(id);return}
+ if(a==='rmTf'){formTf=null;tfUi();return}
  if(a==='unrem'){const x=S.bookings.find(y=>y.id===id);if(x){x.rem=false;save()}render();return}
  if(a==='impYes'){if(impData){S={bookings:impData.bookings,lessons:impData.lessons,tpl:impData.tpl||S.tpl||'',tplU:S.tplU,del:S.del||{}};mig();tab='lessons';adding=false;editId=null;calD=null;save();impData=null;$('#impq').innerHTML='<div class="okmsg">✓ הנתונים יובאו</div>';render()}return}
  if(a==='tab'){tab=id;adding=false;editId=null;confirmId=null;calMenu=null}
- else if(a==='edit'){editId=id;tab='lessons';adding=false;confirmId=null;window.scrollTo(0,0)}
- else if(a==='addB'){adding=true;editId=null}
+ else if(a==='edit'){editId=id;tab='lessons';adding=false;confirmId=null;formTf=(S.bookings.find(x=>x.id===id)||{}).tf||null;window.scrollTo(0,0)}
+ else if(a==='addB'){adding=true;editId=null;formBid=uid();formTf=null}
  else if(a==='cancel'){adding=false;editId=null}
  else if(a==='calDay'){calD=id;calSel=null}
  else if(a==='calV'){calV=id;calSel=null}
@@ -669,6 +817,8 @@ document.addEventListener('click',e=>{
 document.addEventListener('change',e=>{
  const t=e.target;
  if(t.id==='impf'){readImp(t.files[0]);return}
+ if(t.closest('.padd')){payPrev(t.closest('.det'));return}
+ if(t.id==='f-tf'){upTf(t.files[0]);t.value='';return}
  if(t.id==='tpl'){tplLive();save();return}
  if(t.id==='f-expt'){setExp(t.value,$('#f-expd').value);return}
  if(t.id==='f-n'){$('#ages').innerHTML=ageHtml(+t.value,$$('.f-age').map(i=>i.value))}
@@ -676,7 +826,7 @@ document.addEventListener('change',e=>{
  else if(t.dataset.f){const b=S.bookings.find(x=>x.id===t.dataset.id);if(b){b[t.dataset.f]=t.tagName==='SELECT'?t.value:(+t.value||0);save();render()}}
  cash();
 });
-document.addEventListener('input',e=>{const t=e.target;if(t.id==='tpl'){tplLive();return}if(t.id==='f-dep')t.dataset.manual='1';else if(t.id==='f-total'){const d=$('#f-dep');if(d&&!d.dataset.manual)d.value=Math.round((+t.value||0)*10)/100||''}cash()});
+document.addEventListener('input',e=>{const t=e.target;if(t.id==='tpl'){tplLive();return}if(t.closest&&t.closest('.padd')){payPrev(t.closest('.det'));return}if(t.id==='f-dep')t.dataset.manual='1';else if(t.id==='f-total'){const d=$('#f-dep');if(d&&!d.dataset.manual)d.value=Math.round((+t.value||0)*10)/100||''}cash()});
 
 // sampleFn stays null: auto-fill uses the free pattern reader (parseMsg). An AI version could plug in here later.
 let sampleFn=null;
@@ -692,7 +842,9 @@ if(sb)sb.auth.onAuthStateChange((ev,session)=>{
   else if(!u)render();
  },0);
 });
-if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+// No offline mode any more: remove the old offline helper (service worker) and its saved copies.
+if('serviceWorker' in navigator)navigator.serviceWorker.getRegistrations().then(rs=>rs.forEach(r=>r.unregister())).catch(()=>{});
+if(window.caches)caches.keys().then(ks=>ks.forEach(k=>caches.delete(k))).catch(()=>{});
 </script>
 </body>
 </html>
